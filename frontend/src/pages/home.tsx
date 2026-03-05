@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Zap } from "lucide-react";
-import heroBanner from "@/assets/homeBack.jpg";
+import homeBack from "/src/assets/homeBack.jpg";
 
 const Home = () => {
   return (
@@ -8,7 +8,7 @@ const Home = () => {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-          src={heroBanner}
+          src={homeBack}
           alt="Tecnología premium en Puntotech"
           className="w-full h-full object-cover opacity-40"
           loading="eager"

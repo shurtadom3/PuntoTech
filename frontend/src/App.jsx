@@ -5,7 +5,7 @@ export default function App() {
   const [error, setError] = useState(null);
  
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/health/")
+    fetch("http://127.0.0.1:8000/api/")
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();
