@@ -5,13 +5,12 @@ Service Layer — aquí vive TODA la lógica de negocio.
 Las Views NUNCA validan, calculan ni modifican estado directamente.
 Cumple: SRP, Dependency Injection, SOLID.
 """
-from sistema.domain.Builder import PedidoBuilder
-from sistema.infra.Factory import NotificadorFactory
-from sistema.models import (
+from api.domain.Builder import PedidoBuilder
+from api.infra.Factory import NotificadorFactory
+from api.models import (
     Usuario, PerfilUsuario, Producto, Stock,
     Carrito, ItemCarrito, Pedido, Categoria
 )
-
 
 # ─────────────────────────────────────────────
 # UsuarioService

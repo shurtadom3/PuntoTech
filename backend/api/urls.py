@@ -1,21 +1,42 @@
-"""
-URL configuration for config project.
 
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+urls.py — Rutas principales del proyecto PuntoTech
+"""
+from django.contrib import admin
 from django.urls import path
+from api.presentation.views import (
+    health,
+    RegistrarUsuarioView, ActualizarPerfilView,
+    ListarProductosCategoriaView, DetalleProductoView,
+    AgregarProductoCarritoView, VerCarritoView, EliminarProductoCarritoView,
+
+    CrearPedidoView, ListarPedidosView,
+    RecomendacionesView,
+)
 
 urlpatterns = [
-    
+    path("admin/", admin.site.urls),
+
+    # Health check
+    path("api/health/", health),
+
+    # Usuarios
+    path("api/usuarios/registro/", RegistrarUsuarioView.as_view()),
+    path("api/usuarios/<str:usuario_id>/perfil/", ActualizarPerfilView.as_view()),
+
+    # Productos
+    path("api/productos/categoria/<str:categoria_id>/", ListarProductosCategoriaView.as_view()),
+    path("api/productos/<str:producto_id>/", DetalleProductoView.as_view()),
+
+    # Carrito
+    path("api/carrito/<str:usuario_id>/", VerCarritoView.as_view()),
+    path("api/carrito/<str:usuario_id>/agregar/", AgregarProductoCarritoView.as_view()),
+    path("api/carrito/<str:usuario_id>/eliminar/<str:producto_id>/", EliminarProductoCarritoView.as_view()),
+
+    # Pedidos
+    path("api/pedidos/crear/", CrearPedidoView.as_view()),
+    path("api/pedidos/<str:usuario_id>/", ListarPedidosView.as_view()),
+
+    # Recomendaciones
+    path("api/recomendaciones/<str:usuario_id>/", RecomendacionesView.as_view()),
 ]
