@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Zap } from "lucide-react";
 import homeBack from "../assets/homeBack.jpg";
-import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
@@ -58,13 +57,13 @@ const Home = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link
-              to="/products"
+            <a
+              href="#categorias"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity glow"
             >
               Explorar productos
               <ArrowRight size={18} />
-            </Link>
+            </a>
             <a
               href="#combos"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-border text-foreground font-semibold hover:border-primary/50 hover:text-primary transition-colors"
@@ -97,4 +96,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Home

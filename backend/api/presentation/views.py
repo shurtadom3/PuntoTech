@@ -4,6 +4,7 @@ views.py
 Capa de presentación — SOLO orquesta: recibe → llama servicio → responde.
 Ninguna vista supera las 15 líneas de lógica.
 """
+from api.models import Usuario
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -46,6 +47,27 @@ class ActualizarPerfilView(APIView):
             return Response({"mensaje": "Perfil actualizado", "tipo_uso": perfil.tipo_uso}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+        
+class LoginView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        try:
+            user = Usuario.objects.get(email=email)
+        except Usuario.DoesNotExist:
+            return Response({"error": "Credenciales incorrectas"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if user.password != password:
+            return Response({"error": "Credenciales incorrectas"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response({
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "fullName": user.nombre
+            }
+        })
 
 
 # ── Productos ─────────────────────────────────────────────────────────────────
