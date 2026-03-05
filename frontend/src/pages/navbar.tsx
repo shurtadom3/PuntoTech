@@ -7,9 +7,7 @@ const Navbar = () => {
 
   const links = [
     { label: "Inicio", href: "#" },
-    { label: "Celulares", href: "#categorias" },
-    { label: "Computadores", href: "#categorias" },
-    { label: "Audio", href: "#categorias" },
+    { label: "Productos", href: "#products" },
     { label: "Combos", href: "#combos" },
     { label: "Garantías", href: "#garantias" },
   ];
