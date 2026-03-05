@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Menu, X, Search, User } from "lucide-react";
 
@@ -6,11 +7,13 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const links = [
-    { label: "Inicio", href: "#" },
-    { label: "Productos", href: "#products" },
-    { label: "Combos", href: "#combos" },
-    { label: "Garantías", href: "#garantias" },
+    { label: "Inicio", to: "/" },
+    { label: "Productos", to: "/products" },
+    { label: "Combos", to: "/combo"},
+    { label: "Garantías", to: "/garantias" },
   ];
+
+
 
   return (
     <motion.nav
@@ -22,27 +25,28 @@ const Navbar = () => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="font-heading font-bold text-primary-foreground text-sm">PT</span>
             </div>
             <span className="font-heading font-bold text-xl text-foreground">
               Punto<span className="text-primary">tech</span>
             </span>
-          </a>
+          </Link>
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-8">
             {links.map((link) => (
-              <a
+              <Link
                 key={link.label}
-                href={link.href}
+                to={link.to}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
           </div>
+
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-4">
@@ -81,14 +85,14 @@ const Navbar = () => {
           >
             <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
               {links.map((link) => (
-                <a
+                <Link
                   key={link.label}
-                  href={link.href}
+                  to={link.to}
                   className="text-muted-foreground hover:text-primary transition-colors py-2"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
               <div className="flex items-center gap-4 pt-4 border-t border-border">
                 <Search size={20} className="text-muted-foreground" />
