@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
 import { Star, ShoppingCart, Heart } from "lucide-react";
-import productPhone from "assets/productPhone.jpg";
-import productLaptop from "assets/productLaptop.jpg";
-import productHeadphones from "assets/productHeadphones.jpg";
-import productSpeaker from "assets/productSpeaker.jpg";
+import productPhone from "../assets/productPhone.jpg";
+import productLaptop from "../assets/productLaptop.jpg";
+import productHeadphones from "../assets/productHeadphones.jpg";
+import productSpeaker from "../assets/productSpeaker.jpg";
 
 const products = [
   {

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Zap } from "lucide-react";
-import homeBack from "/src/assets/homeBack.jpg";
+import homeBack from "../assets/homeBack.jpg";
 
 const Home = () => {
   return (

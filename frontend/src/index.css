@@ -1,71 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@theme {
+  --color-background: hsl(220 20% 4%);
+  --color-foreground: hsl(210 20% 95%);
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --color-card: hsl(220 18% 8%);
+  --color-card-foreground: hsl(210 20% 95%);
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  --color-popover: hsl(220 18% 8%);
+  --color-popover-foreground: hsl(210 20% 95%);
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  --color-primary: hsl(185 90% 50%);
+  --color-primary-foreground: hsl(220 20% 4%);
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  --color-secondary: hsl(220 15% 14%);
+  --color-secondary-foreground: hsl(210 20% 90%);
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+  --color-muted: hsl(220 15% 12%);
+  --color-muted-foreground: hsl(215 15% 55%);
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  --color-accent: hsl(270 80% 60%);
+  --color-accent-foreground: hsl(210 20% 95%);
+
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+
+  --color-border: hsl(220 15% 16%);
+  --color-input: hsl(220 15% 16%);
+  --color-ring: hsl(185 90% 50%);
+
+  --color-sidebar-background: hsl(220 18% 6%);
+  --color-sidebar-foreground: hsl(210 20% 90%);
+  --color-sidebar-primary: hsl(185 90% 50%);
+  --color-sidebar-primary-foreground: hsl(220 20% 4%);
+  --color-sidebar-accent: hsl(220 15% 14%);
+  --color-sidebar-accent-foreground: hsl(210 20% 90%);
+  --color-sidebar-border: hsl(220 15% 16%);
+  --color-sidebar-ring: hsl(185 90% 50%);
+
+  --radius: 0.75rem;
 }
 
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    --gradient-primary: linear-gradient(135deg, hsl(185 90% 50%), hsl(200 90% 55%));
+    --gradient-accent: linear-gradient(135deg, hsl(270 80% 60%), hsl(300 70% 55%));
+    --gradient-hero: linear-gradient(160deg, hsl(220 20% 4%) 0%, hsl(220 25% 8%) 50%, hsl(200 30% 10%) 100%);
+    --shadow-glow: 0 0 30px -5px hsl(185 90% 50% / 0.3);
+    --shadow-glow-sm: 0 0 15px -3px hsl(185 90% 50% / 0.2);
+    --shadow-card: 0 8px 32px -8px hsl(0 0% 0% / 0.4);
+    --glass-bg: hsl(220 18% 10% / 0.6);
+    --glass-border: hsl(220 15% 20% / 0.5);
   }
-  a:hover {
-    color: #747bff;
+
+  * {
+    @apply border-border;
   }
-  button {
-    background-color: #f9f9f9;
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glow-sm {
+    box-shadow: var(--shadow-glow-sm);
+  }
+
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-accent-text {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
