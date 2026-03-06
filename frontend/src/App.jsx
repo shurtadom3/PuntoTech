@@ -6,8 +6,7 @@ import Guarantee from "./pages/garanties";
 import Auth from "./components/Auth";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/cartContext";
-
-
+import Car from "./components/car";
 
 export default function App() {
   return (
@@ -20,6 +19,7 @@ export default function App() {
       <Route path="/garanties" element={<Guarantee/>} />
       <Route path="/auth" element={<Auth/>} />
       </Routes>
+      <Car />
     </CartProvider>
     </AuthProvider>
 

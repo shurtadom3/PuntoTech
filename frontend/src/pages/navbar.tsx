@@ -22,8 +22,8 @@ const Navbar = () => {
 
   const links = [
     { label: "Inicio", href: "/" },
-    { label: "Combos", href: "#combo" },
-    { label: "Garantías", href: "#garanties" },
+    { label: "Combos", href: "/combo" },
+
   ];
 
   const handleAuthClick = () => {
@@ -84,7 +84,7 @@ const Navbar = () => {
                     transition={{ duration: 0.15 }}
                     className="absolute top-full left-1/2 -translate-x-1/2 pt-2"
                   >
-                    <div className="w-52 rounded-xl bg-card border border-border shadow-lg p-2 space-y-1">
+                    <div className="w-52 rounded-xl bg-white border-border shadow-lg p-2 space-y-1">
                       {categories.map((cat) => (
                         <Link
                           key={cat.label}
@@ -185,12 +185,10 @@ const Navbar = () => {
                   {cat.label}
                 </Link>
               ))}
-              <Link to="#combos" className="text-muted-foreground hover:text-primary transition-colors py-2" onClick={() => setIsOpen(false)}>
+              <Link to="/combo" className="text-muted-foreground hover:text-primary transition-colors py-2" onClick={() => setIsOpen(false)}>
                 Combos
               </Link>
-              <Link to="#garantias" className="text-muted-foreground hover:text-primary transition-colors py-2" onClick={() => setIsOpen(false)}>
-                Garantías
-              </Link>
+
               <div className="flex items-center gap-4 pt-4 border-t border-border">
                 <Search size={20} className="text-muted-foreground" />
                 <button onClick={handleAuthClick} className="flex items-center gap-2 text-muted-foreground hover:text-primary">

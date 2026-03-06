@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Mail, Lock, User, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const Auth = () => {
@@ -10,7 +10,6 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { signIn, signUp } = useAuth();
@@ -20,31 +19,27 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    if (isLogin) {
-      const { error } = await signIn(email, password);
-
-      if (error) {
-        toast.error("Error al iniciar sesión: " + error.message);
+    try {
+      if (isLogin) {
+        // Iniciar sesión
+        await signIn(email, password);
+        toast.success("¡Inicio de sesión exitoso!");
+        navigate("/"); // Redirige a la página principal
       } else {
-        toast.success("¡Bienvenido de vuelta!");
-        navigate("/");
+        // Crear cuenta
+        if (!fullName.trim()) {
+          toast.error("Por favor ingresa tu nombre completo.");
+          setLoading(false);
+          return;
+        }
+
+        await signUp(email, password, fullName);
+        toast.success("¡Cuenta creada exitosamente!");
+        setIsLogin(true); // Cambia a login
+        setPassword(""); // Limpiar contraseña
       }
-
-    } else {
-
-      if (!fullName.trim()) {
-        toast.error("Por favor ingresa tu nombre completo.");
-        setLoading(false);
-        return;
-      }
-
-      const { error } = await signUp(email, password, fullName);
-
-      if (error) {
-        toast.error("Error al registrarse: " + error.message);
-      } else {
-        toast.success("¡Cuenta creada correctamente!");
-      }
+    } catch (error: any) {
+      toast.error(error.message || "Ocurrió un error");
     }
 
     setLoading(false);
@@ -168,7 +163,7 @@ const Auth = () => {
                 />
 
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -176,14 +171,6 @@ const Auth = () => {
                   minLength={6}
                   className="w-full pl-10 pr-12 py-3 rounded-xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
                 />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
               </div>
             </div>
 

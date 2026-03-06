@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Zap } from "lucide-react";
 import homeBack from "../assets/homeBack.jpg";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
@@ -26,7 +27,7 @@ const Home = () => {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-6"
           >
             <Zap size={14} className="text-primary" />
-            <span className="text-sm text-primary font-medium">Stock inteligente en tiempo real</span>
+            <span className="text-sm text-primary font-medium">Descubre lo último en tecnología</span>
           </motion.div>
 
           <motion.h1
@@ -57,39 +58,23 @@ const Home = () => {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <a
-              href="#categorias"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity glow"
+            <Link
+              to="/products"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-blue-500 text-white font-semibold hover:opacity-90 transition-opacity glow"
             >
               Explorar productos
               <ArrowRight size={18} />
-            </a>
-            <a
-              href="#combos"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-border text-foreground font-semibold hover:border-primary/50 hover:text-primary transition-colors"
+            </Link>
+
+            <Link
+              to="/combo"
+              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg bg-gray-500 text-white font-semibold hover:opacity-90 transition-opacity glow"
             >
               Ver combos tech
-            </a>
+            </Link>
           </motion.div>
 
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex gap-8 mt-12 pt-8 border-t border-border/50"
-          >
-            {[
-              { value: "500+", label: "Productos" },
-              { value: "24h", label: "Envío rápido" },
-              { value: "2 años", label: "Garantía digital" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="font-heading text-2xl md:text-3xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
+
         </div>
       </div>
     </section>
