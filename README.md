@@ -28,7 +28,7 @@ Cliente (React :5173)
    └── /api/v2/recomendaciones/ ► Flask :5000  (microservicio)
 ```
  
-El proyecto aplica el **Strangler Fig Pattern**: el módulo de recomendaciones fue extraído del monolito Django a un microservicio Flask independiente. Ver [Wiki — Migración a Microservicios](../../wiki/Migración-a-Microservicios-(Strangler-Pattern)) para la justificación técnica completa.
+El proyecto aplica el **Strangler Fig Pattern**: el módulo de recomendaciones fue extraído del monolito Django a un microservicio Flask independiente. 
  
 ---
  
@@ -73,7 +73,7 @@ PuntoTech/
 | `StockService` | Validación, reserva y descuento de stock |
 | `CarritoService` | Agregar, eliminar y calcular total del carrito |
 | `PedidoService` | Creación de pedidos con patrón Builder |
-| `RecomendacionService` | ~~Recomendaciones~~ → migrado a Flask |
+| `RecomendacionService` |  → migrado a Flask |
  
 ---
  
@@ -105,11 +105,11 @@ PuntoTech/
  
 ## Correr el Proyecto
  
-### Con Docker (recomendado)
+### Con Docker
  
 ```bash
 # 1. Clonar el repositorio
-git clone <url-del-repo>
+git clone <https://github.com/shurtadom3/PuntoTech.git>
 cd PuntoTech
  
 # 2. Levantar todos los servicios
@@ -120,7 +120,7 @@ curl http://localhost/api/health/       # Django
 curl http://localhost/flask/health      # Flask
 ```
  
-### Frontend (desarrollo local)
+### Frontend 
  
 ```bash
 cd frontend
