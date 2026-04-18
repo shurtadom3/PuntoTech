@@ -1,127 +1,122 @@
-"""
-views.py
---------
-Capa de presentación — SOLO orquesta: recibe → llama servicio → responde.
-Ninguna vista supera las 15 líneas de lógica.
-"""
+
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api.application.services import (
-    UsuarioService, ProductoService,
-    CarritoService, PedidoService, RecomendacionService
+    UserService, ProductService,
+    CartService, OrderService, RecommendationService
 )
 from api.presentation.serializers import (
-    UsuarioRegistroSerializer, ActualizarPerfilSerializer,
-    AgregarProductoCarritoSerializer, CrearPedidoSerializer,
-    ProductoSerializer, PedidoSerializer
+    UserRegistrationSerializer, UpdateProfileSerializer,
+    AddCartItemSerializer, CreateOrderSerializer,
+    ProductSerializer, OrderSerializer
 )
 
 def health(request):
-    return JsonResponse({"status": "ok", "message": "Django conectado"})
+    return JsonResponse({"status": "ok", "message": "Django connected"})
 
 
-# ── Usuarios ──────────────────────────────────────────────────────────────────
+# ── Users ─────────────────────────────────────────────────────────────────────
 
-class RegistrarUsuarioView(APIView):
+class RegisterUserView(APIView):
     def post(self, request):
-        serializer = UsuarioRegistroSerializer(data=request.data)
+        serializer = UserRegistrationSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            usuario = UsuarioService().registrar(serializer.validated_data)
-            return Response({"id": usuario.id, "email": usuario.email}, status=status.HTTP_201_CREATED)
+            user = UserService().register(serializer.validated_data)
+            return Response({"id": user.id, "email": user.email}, status=status.HTTP_201_CREATED)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 
 
-class ActualizarPerfilView(APIView):
-    def put(self, request, usuario_id):
-        serializer = ActualizarPerfilSerializer(data=request.data)
+class UpdateProfileView(APIView):
+    def put(self, request, user_id):
+        serializer = UpdateProfileSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            perfil = UsuarioService().actualizar_perfil(usuario_id, serializer.validated_data)
-            return Response({"mensaje": "Perfil actualizado", "tipo_uso": perfil.tipo_uso}, status=status.HTTP_200_OK)
+            profile = UserService().update_profile(user_id, serializer.validated_data)
+            return Response({"message": "Profile updated", "usage_type": profile.usage_type}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ── Productos ─────────────────────────────────────────────────────────────────
+# ── Products ──────────────────────────────────────────────────────────────────
 
-class ListarProductosCategoriaView(APIView):
-    def get(self, request, categoria_id):
-        productos = ProductoService().listar_por_categoria(categoria_id)
-        data = ProductoSerializer(productos, many=True).data
+class ListProductsByCategoryView(APIView):
+    def get(self, request, category_id):
+        products = ProductService().list_by_category(category_id)
+        data = ProductSerializer(products, many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
 
-class DetalleProductoView(APIView):
-    def get(self, request, producto_id):
+class ProductDetailView(APIView):
+    def get(self, request, product_id):
         try:
-            producto = ProductoService().obtener_detalle(producto_id)
-            return Response(ProductoSerializer(producto).data, status=status.HTTP_200_OK)
+            product = ProductService().get_detail(product_id)
+            return Response(ProductSerializer(product).data, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
 
-# ── Carrito ───────────────────────────────────────────────────────────────────
+# ── Cart ──────────────────────────────────────────────────────────────────────
 
-class AgregarProductoCarritoView(APIView):
-    def post(self, request, usuario_id):
-        serializer = AgregarProductoCarritoSerializer(data=request.data)
+class AddCartItemView(APIView):
+    def post(self, request, user_id):
+        serializer = AddCartItemSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            CarritoService().agregar_producto(usuario_id, **serializer.validated_data)
-            return Response({"mensaje": "Producto agregado al carrito."}, status=status.HTTP_200_OK)
+            CartService().add_product(user_id, **serializer.validated_data)
+            return Response({"message": "Product added to cart."}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 
 
-class VerCarritoView(APIView):
-    def get(self, request, usuario_id):
+class ViewCartView(APIView):
+    def get(self, request, user_id):
         try:
-            resumen = CarritoService().calcular_total(usuario_id)
-            return Response(resumen, status=status.HTTP_200_OK)
+            summary = CartService().calculate_total(user_id)
+            return Response(summary, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
 
-class EliminarProductoCarritoView(APIView):
-    def delete(self, request, usuario_id, producto_id):
-        CarritoService().eliminar_producto(usuario_id, producto_id)
-        return Response({"mensaje": "Producto eliminado del carrito."}, status=status.HTTP_200_OK)
+class RemoveCartItemView(APIView):
+    def delete(self, request, user_id, product_id):
+        CartService().remove_product(user_id, product_id)
+        return Response({"message": "Product removed from cart."}, status=status.HTTP_200_OK)
 
 
-# ── Pedidos ───────────────────────────────────────────────────────────────────
+# ── Orders ────────────────────────────────────────────────────────────────────
 
-class CrearPedidoView(APIView):
+class CreateOrderView(APIView):
     def post(self, request):
-        serializer = CrearPedidoSerializer(data=request.data)
+        serializer = CreateOrderSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            pedido = PedidoService().crear_pedido(serializer.validated_data)
-            return Response({"id": pedido.id, "total": float(pedido.total), "estado": pedido.estado}, status=status.HTTP_201_CREATED)
+            order = OrderService().create_order(serializer.validated_data)
+            return Response({"id": order.id, "total": float(order.total), "status": order.status}, status=status.HTTP_201_CREATED)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 
 
-class ListarPedidosView(APIView):
-    def get(self, request, usuario_id):
-        pedidos = PedidoService().listar_pedidos_usuario(usuario_id)
-        data = PedidoSerializer(pedidos, many=True).data
+class ListOrdersView(APIView):
+    def get(self, request, user_id):
+        orders = OrderService().list_user_orders(user_id)
+        data = OrderSerializer(orders, many=True).data
         return Response(data, status=status.HTTP_200_OK)
 
 
-# ── Recomendaciones ───────────────────────────────────────────────────────────
+# ── Recommendations ───────────────────────────────────────────────────────────
 
-class RecomendacionesView(APIView):
-    def get(self, request, usuario_id):
+class RecommendationsView(APIView):
+    def get(self, request, user_id):
         try:
-            recomendados = RecomendacionService().generar_recomendacion(usuario_id)
-            return Response({"recomendaciones": recomendados}, status=status.HTTP_200_OK)
+            recommended = RecommendationService().generate_recommendation(user_id)
+            return Response({"recommendations": recommended}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)

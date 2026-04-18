@@ -1,64 +1,59 @@
-"""
-serializers.py
---------------
-Serializers DRF — solo entrada/salida de datos.
-Sin lógica de negocio.
-"""
+
 from rest_framework import serializers
-from api.models import Producto, Pedido, DetallePedido
+from api.models import Product, Order, OrderDetail
 
 
-class UsuarioRegistroSerializer(serializers.Serializer):
-    nombre = serializers.CharField(max_length=150)
+class UserRegistrationSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(min_length=6, write_only=True)
-    presupuesto = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
-    tipo_uso = serializers.CharField(max_length=100, required=False, default="")
-    marcas_preferidas = serializers.CharField(max_length=255, required=False, default="")
+    budget = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    usage_type = serializers.CharField(max_length=100, required=False, default="")
+    preferred_brands = serializers.CharField(max_length=255, required=False, default="")
 
 
-class ActualizarPerfilSerializer(serializers.Serializer):
-    presupuesto = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
-    tipo_uso = serializers.CharField(max_length=100, required=False)
-    marcas_preferidas = serializers.CharField(max_length=255, required=False)
+class UpdateProfileSerializer(serializers.Serializer):
+    budget = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
+    usage_type = serializers.CharField(max_length=100, required=False)
+    preferred_brands = serializers.CharField(max_length=255, required=False)
 
 
-class AgregarProductoCarritoSerializer(serializers.Serializer):
-    producto_id = serializers.CharField()
-    cantidad = serializers.IntegerField(min_value=1)
+class AddCartItemSerializer(serializers.Serializer):
+    product_id = serializers.CharField()
+    quantity = serializers.IntegerField(min_value=1)
 
 
-class CrearPedidoSerializer(serializers.Serializer):
-    usuario_id = serializers.CharField()
-    direccion_envio = serializers.CharField(min_length=5)
+class CreateOrderSerializer(serializers.Serializer):
+    user_id = serializers.CharField()
+    shipping_address = serializers.CharField(min_length=5)
 
 
-class ProductoSerializer(serializers.ModelSerializer):
-    categoria = serializers.StringRelatedField()
-    stock_disponible = serializers.SerializerMethodField()
+class ProductSerializer(serializers.ModelSerializer):
+    category = serializers.StringRelatedField()
+    available_stock = serializers.SerializerMethodField()
 
     class Meta:
-        model = Producto
-        fields = ["id", "nombre", "marca", "precio", "descripcion", "categoria", "stock_disponible"]
+        model = Product
+        fields = ["id", "name", "brand", "price", "description", "category", "available_stock"]
 
-    def get_stock_disponible(self, obj):
+    def get_available_stock(self, obj):
         try:
-            return obj.stock.cantidad_disponible
+            return obj.stock.available_quantity
         except Exception:
             return None
 
 
-class DetallePedidoSerializer(serializers.ModelSerializer):
-    producto = serializers.StringRelatedField()
+class OrderDetailSerializer(serializers.ModelSerializer):
+    product = serializers.StringRelatedField()
 
     class Meta:
-        model = DetallePedido
-        fields = ["producto", "cantidad", "precio_unitario"]
+        model = OrderDetail
+        fields = ["product", "quantity", "unit_price"]
 
 
-class PedidoSerializer(serializers.ModelSerializer):
-    detalles = DetallePedidoSerializer(many=True, read_only=True)
+class OrderSerializer(serializers.ModelSerializer):
+    details = OrderDetailSerializer(many=True, read_only=True)
 
     class Meta:
-        model = Pedido
-        fields = ["id", "fecha", "estado", "total", "direccion_envio", "detalles"]
+        model = Order
+        fields = ["id", "date", "status", "total", "shipping_address", "details"]

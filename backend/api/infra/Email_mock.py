@@ -1,13 +1,8 @@
-"""
-infra/Email_mock.py
--------------------
-Implementación Mock — imprime por consola en DEV/TEST.
-"""
 
 
 class EmailMock:
-    def enviar_confirmacion(self, pedido):
-        print(f"[MOCK EMAIL] Pedido {pedido.id} confirmado. Total: ${pedido.total}")
+    def send_confirmation(self, order):
+        print(f"[MOCK EMAIL] Order {order.id} confirmed. Total: ${order.total}")
 
-    def enviar_notificacion_stock(self, producto):
-        print(f"[MOCK EMAIL] Stock bajo para: {producto.nombre}")
+    def send_low_stock_notification(self, product):
+        print(f"[MOCK EMAIL] Low stock for: {product.name}")

@@ -1,17 +1,17 @@
 """
 infra/Factory.py
 ----------------
-Decide en tiempo de ejecución si usa email real (PROD) o mock (DEV).
+Decides at runtime whether to use real email (PROD) or mock (DEV).
 """
 import os
-from api.infra.Email_real import EmailReal 
-from api.infra.Email_mock import EmailMock
+from api.infra.email_real import EmailReal
+from api.infra.email_mock import EmailMock
 
 
-class NotificadorFactory:
+class NotifierFactory:
 
     @staticmethod
-    def crear():
+    def create():
         env = os.getenv("ENV_TYPE", "DEV").upper()
         if env == "PROD":
             return EmailReal()

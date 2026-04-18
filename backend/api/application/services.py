@@ -1,140 +1,126 @@
-"""
-services.py
------------
-Service Layer — aquí vive TODA la lógica de negocio.
-Las Views NUNCA validan, calculan ni modifican estado directamente.
-Cumple: SRP, Dependency Injection, SOLID.
-"""
-from api.domain.Builder import PedidoBuilder
-from api.infra.Factory import NotificadorFactory
+
+from api.domain.Builder import OrderBuilder
+from api.infra.Factory import NotifierFactory
 from api.models import (
-    Usuario, PerfilUsuario, Producto, Stock,
-    Carrito, ItemCarrito, Pedido, Categoria
+    User, UserProfile, Product, Stock,
+    Cart, CartItem, Order, Category
 )
 
-# ─────────────────────────────────────────────
-# UsuarioService
-# ─────────────────────────────────────────────
-class UsuarioService:
+# UserService
+class UserService:
 
-    def registrar(self, datos: dict) -> Usuario:
-        if Usuario.objects.filter(email=datos["email"]).exists():
-            raise ValueError("Ya existe un usuario con ese email.")
-        usuario = Usuario.objects.create(
-            nombre=datos["nombre"],
-            email=datos["email"],
-            password=datos["password"],   # En producción: usar hashing
+    def register(self, data: dict):
+        if User.objects.filter(email=data["email"]).exists():
+            raise ValueError("A user with that email already exists.")
+        user = User.objects.create(
+            name=data["name"],
+            email=data["email"],
+            password=data["password"],   # In production: use hashing
         )
-        PerfilUsuario.objects.create(
-            usuario=usuario,
-            presupuesto=datos.get("presupuesto"),
-            tipo_uso=datos.get("tipo_uso", ""),
-            marcas_preferidas=datos.get("marcas_preferidas", ""),
+        UserProfile.objects.create(
+            user=user,
+            budget=data.get("budget"),
+            usage_type=data.get("usage_type", ""),
+            preferred_brands=data.get("preferred_brands", ""),
         )
-        Carrito.objects.create(usuario=usuario)
-        return usuario
+        Cart.objects.create(user=user)
+        return user
 
-    def actualizar_perfil(self, usuario_id: str, datos: dict) -> PerfilUsuario:
+    def update_profile(self, user_id: str, data: dict):
         try:
-            perfil = PerfilUsuario.objects.get(usuario_id=usuario_id)
-        except PerfilUsuario.DoesNotExist:
-            raise ValueError("Perfil no encontrado.")
-        perfil.presupuesto = datos.get("presupuesto", perfil.presupuesto)
-        perfil.tipo_uso = datos.get("tipo_uso", perfil.tipo_uso)
-        perfil.marcas_preferidas = datos.get("marcas_preferidas", perfil.marcas_preferidas)
-        perfil.save()
-        return perfil
+            profile = UserProfile.objects.get(user_id=user_id)
+        except UserProfile.DoesNotExist:
+            raise ValueError("Profile not found.")
+        profile.budget = data.get("budget", profile.budget)
+        profile.usage_type = data.get("usage_type", profile.usage_type)
+        profile.preferred_brands = data.get("preferred_brands", profile.preferred_brands)
+        profile.save()
+        return profile
 
 
-# ─────────────────────────────────────────────
-# ProductoService
-# ─────────────────────────────────────────────
-class ProductoService:
+# ProductService
+class ProductService:
 
-    def listar_por_categoria(self, categoria_id: str) -> list:
-        return list(Producto.objects.filter(categoria_id=categoria_id).select_related("stock"))
+    def list_by_category(self, category_id: str) -> list:
+        return list(Product.objects.filter(category_id=category_id).select_related("stock"))
 
-    def obtener_detalle(self, producto_id: str) -> Producto:
+    def get_detail(self, product_id: str):
         try:
-            return Producto.objects.select_related("stock", "categoria").get(id=producto_id)
-        except Producto.DoesNotExist:
-            raise ValueError("Producto no encontrado.")
+            return Product.objects.select_related("stock", "category").get(id=product_id)
+        except Product.DoesNotExist:
+            raise ValueError("Product not found.")
 
 
-# ─────────────────────────────────────────────
 # StockService
-# ─────────────────────────────────────────────
 class StockService:
 
     def __init__(self):
-        self.notificador = NotificadorFactory.crear()
+        self.notifier = NotifierFactory.create()
 
-    def validar_disponibilidad(self, producto_id: str, cantidad: int) -> bool:
+    def check_availability(self, product_id: str, quantity: int) -> bool:
         try:
-            stock = Stock.objects.get(producto_id=producto_id)
+            stock = Stock.objects.get(product_id=product_id)
         except Stock.DoesNotExist:
-            raise ValueError("No existe registro de stock para ese producto.")
-        return stock.cantidad_disponible >= cantidad
+            raise ValueError("No stock record found for that product.")
+        return stock.available_quantity >= quantity
 
-    def reservar(self, producto_id: str, cantidad: int):
-        stock = Stock.objects.select_for_update().get(producto_id=producto_id)
-        if stock.cantidad_disponible < cantidad:
-            raise ValueError(f"Stock insuficiente para el producto {producto_id}.")
-        stock.cantidad_disponible -= cantidad
-        stock.cantidad_reservada += cantidad
+    def reserve(self, product_id: str, quantity: int):
+        stock = Stock.objects.select_for_update().get(product_id=product_id)
+        if stock.available_quantity < quantity:
+            raise ValueError(f"Insufficient stock for product {product_id}.")
+        stock.available_quantity -= quantity
+        stock.reserved_quantity += quantity
         stock.save()
 
-    def liberar(self, producto_id: str, cantidad: int):
-        stock = Stock.objects.get(producto_id=producto_id)
-        stock.cantidad_reservada -= cantidad
-        stock.cantidad_disponible += cantidad
+    def release(self, product_id: str, quantity: int):
+        stock = Stock.objects.get(product_id=product_id)
+        stock.reserved_quantity -= quantity
+        stock.available_quantity += quantity
         stock.save()
 
-    def confirmar_descuento(self, producto_id: str, cantidad: int):
-        stock = Stock.objects.get(producto_id=producto_id)
-        stock.cantidad_reservada -= cantidad
+    def confirm_deduction(self, product_id: str, quantity: int):
+        stock = Stock.objects.get(product_id=product_id)
+        stock.reserved_quantity -= quantity
         stock.save()
-        if stock.cantidad_disponible <= stock.punto_reposicion:
-            producto = stock.producto
-            self.notificador.enviar_notificacion_stock(producto)
+        if stock.available_quantity <= stock.reorder_point:
+            product = stock.product
+            self.notifier.send_low_stock_notification(product)
 
 
-# ─────────────────────────────────────────────
-# CarritoService
-# ─────────────────────────────────────────────
-class CarritoService:
+# CartService
+class CartService:
 
     def __init__(self):
         self.stock_service = StockService()
 
-    def agregar_producto(self, usuario_id: str, producto_id: str, cantidad: int):
-        if not self.stock_service.validar_disponibilidad(producto_id, cantidad):
-            raise ValueError("No hay stock suficiente para agregar al carrito.")
-        carrito = Carrito.objects.get(usuario_id=usuario_id)
-        item, created = ItemCarrito.objects.get_or_create(
-            carrito=carrito,
-            producto_id=producto_id,
-            defaults={"cantidad": cantidad}
+    def add_product(self, user_id: str, product_id: str, quantity: int):
+        if not self.stock_service.check_availability(product_id, quantity):
+            raise ValueError("Not enough stock to add to cart.")
+        cart = Cart.objects.get(user_id=user_id)
+        item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product_id=product_id,
+            defaults={"quantity": quantity}
         )
         if not created:
-            item.cantidad += cantidad
+            item.quantity += quantity
             item.save()
 
-    def eliminar_producto(self, usuario_id: str, producto_id: str):
-        carrito = Carrito.objects.get(usuario_id=usuario_id)
-        ItemCarrito.objects.filter(carrito=carrito, producto_id=producto_id).delete()
+    def remove_product(self, user_id: str, product_id: str):
+        cart = Cart.objects.get(user_id=user_id)
+        CartItem.objects.filter(cart=cart, product_id=product_id).delete()
 
-    def calcular_total(self, usuario_id: str) -> dict:
-        carrito = Carrito.objects.prefetch_related("items__producto").get(usuario_id=usuario_id)
-        items = carrito.items.all()
-        total = sum(i.producto.precio * i.cantidad for i in items)
+    def calculate_total(self, user_id: str) -> dict:
+        cart = Cart.objects.prefetch_related("items__product").get(user_id=user_id)
+        items = cart.items.all()
+        total = sum(i.product.price * i.quantity for i in items)
         return {
             "items": [
                 {
-                    "producto": i.producto.nombre,
-                    "cantidad": i.cantidad,
-                    "precio_unitario": float(i.producto.precio),
-                    "subtotal": float(i.producto.precio * i.cantidad),
+                    "product": i.product.name,
+                    "quantity": i.quantity,
+                    "unit_price": float(i.product.price),
+                    "subtotal": float(i.product.price * i.quantity),
                 }
                 for i in items
             ],
@@ -142,103 +128,100 @@ class CarritoService:
         }
 
 
-# ─────────────────────────────────────────────
-# PedidoService
-# ─────────────────────────────────────────────
-class PedidoService:
+# OrderService
+class OrderService:
 
     def __init__(self):
-        self.notificador = NotificadorFactory.crear()
+        self.notifier = NotifierFactory.create()
         self.stock_service = StockService()
 
-    def crear_pedido(self, datos: dict) -> Pedido:
+    def create_order(self, data: dict):
         """
-        Flujo principal:
-        1. Obtener items del carrito
-        2. Validar y reservar stock por cada producto
-        3. Construir el pedido con PedidoBuilder
-        4. Notificar confirmación
+        Main flow:
+        1. Get cart items
+        2. Validate and reserve stock for each product
+        3. Build the order with OrderBuilder
+        4. Send confirmation notification
         """
-        usuario_id = datos["usuario_id"]
-        direccion = datos["direccion_envio"]
+        user_id = data["user_id"]
+        address = data["shipping_address"]
 
-        # 1. Obtener carrito
+        # 1. Get cart
         try:
-            carrito = Carrito.objects.prefetch_related("items__producto").get(usuario_id=usuario_id)
-        except Carrito.DoesNotExist:
-            raise ValueError("El usuario no tiene carrito activo.")
+            cart = Cart.objects.prefetch_related("items__product").get(user_id=user_id)
+        except Cart.DoesNotExist:
+            raise ValueError("The user does not have an active cart.")
 
-        items = list(carrito.items.all())
+        items = list(cart.items.all())
         if not items:
-            raise ValueError("El carrito está vacío.")
+            raise ValueError("The cart is empty.")
 
-        # 2. Validar stock antes de reservar
+        # 2. Validate stock before reserving
         for item in items:
-            if not self.stock_service.validar_disponibilidad(item.producto_id, item.cantidad):
-                raise ValueError(f"Stock insuficiente para: {item.producto.nombre}")
+            if not self.stock_service.check_availability(item.product_id, item.quantity):
+                raise ValueError(f"Insufficient stock for: {item.product.name}")
 
-        # 3. Reservar stock
+        # 3. Reserve stock
         for item in items:
-            self.stock_service.reservar(item.producto_id, item.cantidad)
+            self.stock_service.reserve(item.product_id, item.quantity)
 
-        # 4. Construir pedido con el Builder
-        productos_builder = [{"producto": i.producto, "cantidad": i.cantidad} for i in items]
+        # 4. Build order with Builder
+        builder_products = [{"product": i.product, "quantity": i.quantity} for i in items]
         try:
-            pedido = (
-                PedidoBuilder()
-                .para_usuario(usuario_id)
-                .con_productos(productos_builder)
-                .con_direccion(direccion)
-                .calcular_total()
+            order = (
+                OrderBuilder()
+                .for_user(user_id)
+                .with_products(builder_products)
+                .with_address(address)
+                .calculate_total()
                 .build()
             )
         except Exception as exc:
-            # Revertir reservas si el builder falla
+            # Revert reservations if builder fails
             for item in items:
-                self.stock_service.liberar(item.producto_id, item.cantidad)
+                self.stock_service.release(item.product_id, item.quantity)
             raise exc
 
-        # 5. Confirmar descuento de stock y limpiar carrito
+        # 5. Confirm stock deduction and clear cart
         for item in items:
-            self.stock_service.confirmar_descuento(item.producto_id, item.cantidad)
-        carrito.items.all().delete()
+            self.stock_service.confirm_deduction(item.product_id, item.quantity)
+        cart.items.all().delete()
 
-        # 6. Notificar
-        self.notificador.enviar_confirmacion(pedido)
+        # 6. Notify
+        self.notifier.send_confirmation(order)
 
-        return pedido
+        return order
 
-    def listar_pedidos_usuario(self, usuario_id: str) -> list:
-        return list(Pedido.objects.filter(usuario_id=usuario_id).prefetch_related("detalles__producto"))
+    def list_user_orders(self, user_id: str) -> list:
+        return list(Order.objects.filter(user_id=user_id).prefetch_related("details__product"))
 
 
-# ─────────────────────────────────────────────
-# RecomendacionService
-# ─────────────────────────────────────────────
-class RecomendacionService:
+# RecommendationService
+
+class RecommendationService:
     """
-    Genera y almacena recomendaciones en el JSONField del PerfilUsuario.
-    No existe como tabla separada — el perfil es la fuente de verdad.
+    Generates and stores recommendations in the UserProfile JSONField.
+    No separate table — the profile is the source of truth.
     """
 
-    def generar_recomendacion(self, usuario_id: str) -> list:
+    def generate_recommendation(self, user_id: str) -> list:
         try:
-            perfil = PerfilUsuario.objects.get(usuario_id=usuario_id)
-        except PerfilUsuario.DoesNotExist:
-            raise ValueError("Perfil de usuario no encontrado.")
+            profile = UserProfile.objects.get(user_id=user_id)
+        except UserProfile.DoesNotExist:
+            raise ValueError("User profile not found.")
 
-        criterio = perfil.tipo_uso or "general"
-        marcas = perfil.marcas_preferidas or ""
-        presupuesto = float(perfil.presupuesto) if perfil.presupuesto else None
+        criterion = profile.usage_type or "general"
+        brands = profile.preferred_brands or ""
+        budget = float(profile.budget) if profile.budget else None
 
-        productos_qs = Producto.objects.all()
-        if marcas:
-            lista_marcas = [m.strip() for m in marcas.split(",")]
-            productos_qs = productos_qs.filter(marca__in=lista_marcas)
-        if presupuesto:
-            productos_qs = productos_qs.filter(precio__lte=presupuesto)
+        products_qs = Product.objects.all()
+        if brands:
+            brand_list = [b.strip() for b in brands.split(",")]
+            products_qs = products_qs.filter(brand__in=brand_list)
+        if budget:
+            products_qs = products_qs.filter(price__lte=budget)
 
-        recomendados = list(productos_qs[:5].values("id", "nombre", "marca", "precio"))
+        recommended = list(products_qs[:5].values("id", "name", "brand", "price"))
 
-        perfil.agregar_recomendacion(tipo=criterio, criterio=f"presupuesto={presupuesto}, marcas={marcas}")
-        return recomendados
+        profile.add_recommendation(type=criterion, criterion=f"budget={budget}, brands={brands}")
+        return recommended
