@@ -1,13 +1,13 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Usuario, PerfilUsuario, Categoria, Producto, Pedido, Carrito, ItemCarrito, Stock, DetallePedido
-admin.site.register(Usuario)
-admin.site.register(PerfilUsuario)
-admin.site.register(Categoria)
-admin.site.register(Producto)
-admin.site.register(Pedido)
-admin.site.register(Carrito)
-admin.site.register(ItemCarrito)
+from .models import User, UserProfile, Category, Product, Order, Cart, CartItem, Stock, OrderDetail
+admin.site.register(User)
+admin.site.register(UserProfile)
+admin.site.register(Category)
+admin.site.register(Product)
+admin.site.register(Order)
+admin.site.register(Cart)
+admin.site.register(CartItem)
 admin.site.register(Stock)
-admin.site.register(DetallePedido)
+admin.site.register(OrderDetail)

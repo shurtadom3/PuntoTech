@@ -1,68 +1,64 @@
-"""
-domain/Builder.py
------------------
-Patrón Builder para construir un Pedido validado paso a paso.
-"""
+
 from decimal import Decimal
 
-class PedidoBuilder:
+class OrderBuilder:
 
     def __init__(self):
-        self._usuario_id = None
-        self._productos = []
-        self._direccion = ""
+        self._user_id = None
+        self._products = []
+        self._address = ""
         self._total = Decimal("0.00")
 
-    def para_usuario(self, usuario_id: str) -> "PedidoBuilder":
-        if not usuario_id:
-            raise ValueError("El pedido debe tener un usuario asociado.")
-        self._usuario_id = usuario_id
+    def for_user(self, user_id: str) -> "OrderBuilder":
+        if not user_id:
+            raise ValueError("The order must have an associated user.")
+        self._user_id = user_id
         return self
 
-    def con_productos(self, productos: list) -> "PedidoBuilder":
-        if not productos:
-            raise ValueError("El pedido debe contener al menos un producto.")
-        self._productos = productos
+    def with_products(self, products: list) -> "OrderBuilder":
+        if not products:
+            raise ValueError("The order must contain at least one product.")
+        self._products = products
         return self
 
-    def con_direccion(self, direccion: str) -> "PedidoBuilder":
-        if not direccion or len(direccion.strip()) < 5:
-            raise ValueError("La dirección de envío no es válida.")
-        self._direccion = direccion.strip()
+    def with_address(self, address: str) -> "OrderBuilder":
+        if not address or len(address.strip()) < 5:
+            raise ValueError("The shipping address is not valid.")
+        self._address = address.strip()
         return self
 
-    def calcular_total(self) -> "PedidoBuilder":
-        if not self._productos:
-            raise ValueError("No hay productos para calcular el total.")
+    def calculate_total(self) -> "OrderBuilder":
+        if not self._products:
+            raise ValueError("No products to calculate the total.")
         self._total = sum(
-            p["producto"].precio * p["cantidad"]
-            for p in self._productos
+            p["product"].price * p["quantity"]
+            for p in self._products
         )
         return self
 
     def build(self):
         if self._total <= 0:
-            raise ValueError("El total del pedido debe ser mayor a cero.")
-        if not self._usuario_id:
-            raise ValueError("El pedido no tiene usuario.")
-        if not self._direccion:
-            raise ValueError("El pedido no tiene dirección de envío.")
+            raise ValueError("The order total must be greater than zero.")
+        if not self._user_id:
+            raise ValueError("The order has no user.")
+        if not self._address:
+            raise ValueError("The order has no shipping address.")
 
-        from api.models import Pedido, DetallePedido
+        from api.models import Order, OrderDetail
 
-        pedido = Pedido.objects.create(
-            usuario_id=self._usuario_id,
+        order = Order.objects.create(
+            user_id=self._user_id,
             total=self._total,
-            direccion_envio=self._direccion,
-            estado="pendiente",
+            shipping_address=self._address,
+            status="pending",
         )
 
-        for item in self._productos:
-            DetallePedido.objects.create(
-                pedido=pedido,
-                producto=item["producto"],
-                cantidad=item["cantidad"],
-                precio_unitario=item["producto"].precio,
+        for item in self._products:
+            OrderDetail.objects.create(
+                order=order,
+                product=item["product"],
+                quantity=item["quantity"],
+                unit_price=item["product"].price,
             )
 
-        return pedido
+        return order
