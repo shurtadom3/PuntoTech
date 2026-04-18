@@ -1,0 +1,30 @@
+
+services:
+
+  django:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - ENV_TYPE=DEV
+    expose:
+      - "8000"
+    volumes:
+      - ./backend:/app
+
+  flask-recomendaciones:
+    build:
+      context: ./recomendation_service
+      dockerfile: Dockerfile
+    expose:
+      - "5000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - django
+      - flask-recomendaciones
