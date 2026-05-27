@@ -1,4 +1,6 @@
 
+from datetime import timedelta
+
 from api.domain.Builder import OrderBuilder
 from api.infra.Factory import NotifierFactory
 from api.models import (
@@ -141,10 +143,15 @@ class CartService:
 
 # OrderService
 class OrderService:
+    DELIVERY_ESTIMATE_DAYS = 5
 
     def __init__(self):
         self.notifier = NotifierFactory.create()
         self.stock_service = StockService()
+
+    @classmethod
+    def get_estimated_delivery_date(cls, order):
+        return order.date + timedelta(days=cls.DELIVERY_ESTIMATE_DAYS)
 
     def create_order(self, data: dict):
         """
@@ -176,7 +183,7 @@ class OrderService:
         for item in items:
             self.stock_service.reserve(item.product_id, item.quantity)
 
-        # 4. Build order with Builder
+        # 4. Build confirmed order with Builder
         builder_products = [{"product": i.product, "quantity": i.quantity} for i in items]
         try:
             order = (
@@ -198,8 +205,9 @@ class OrderService:
             self.stock_service.confirm_deduction(item.product_id, item.quantity)
         cart.items.all().delete()
 
-        # 6. Notify
-        self.notifier.send_confirmation(order)
+        # 6. Notify customer
+        email_sent = self.notifier.send_confirmation(order)
+        order.email_sent = email_sent
 
         return order
 
