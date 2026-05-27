@@ -12,12 +12,23 @@ const formatPrice = (price: number) =>
     maximumFractionDigits: 0,
   }).format(price);
 
+const formatDate = (date: string) =>
+  new Intl.DateTimeFormat("es-CO", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${date}T00:00:00`));
+
 const getUser = () => {
   const raw = localStorage.getItem("puntotech_user");
   return raw ? JSON.parse(raw) : null;
 };
 
-const CartSidebar = () => {
+interface CartSidebarProps {
+  onCheckoutSuccess?: (message: string) => void;
+}
+
+const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
   const { closeCart, clearCart, isCartOpen, items, removeItem, total, updateQuantity } = useCart();
   const [address, setAddress] = useState("");
   const [message, setMessage] = useState("");
@@ -51,7 +62,18 @@ const CartSidebar = () => {
       }
       clearCart();
       setAddress("");
-      setMessage(`Compra creada. Pedido ${order.id}`);
+      const estimatedDate = order.estimated_delivery_date
+        ? ` Fecha estimada de llegada: ${formatDate(order.estimated_delivery_date)}.`
+        : "";
+      const emailMessage = order.email_sent
+        ? "El correo de confirmacion fue enviado."
+        : "Revisa la configuracion SMTP para que el correo salga de verdad.";
+      onCheckoutSuccess?.(
+        order.message
+          ? `${order.message} Pedido ${order.id}.${estimatedDate} ${emailMessage}`
+          : `Compra confirmada. El producto se compro correctamente. Pedido ${order.id}.${estimatedDate} ${emailMessage}`
+      );
+      closeCart();
     } catch {
       setMessage("No se pudo completar la compra. Revisa que el backend este activo.");
     } finally {
@@ -157,7 +179,7 @@ const CartSidebar = () => {
                     </p>
                   )}
 
-                  {message && <p className="mt-3 text-sm text-primary">{message}</p>}
+                  {message && <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{message}</p>}
 
                   <button
                     type="button"

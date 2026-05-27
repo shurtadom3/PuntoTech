@@ -1,12 +1,34 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Menu, X, Search, User } from "lucide-react";
 import { useCart } from "../context/CartContext";
 
+interface StoredUser {
+  id: string;
+  name?: string;
+  email: string;
+}
+
+const getStoredUser = (): StoredUser | null => {
+  const raw = localStorage.getItem("puntotech_user");
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as StoredUser;
+  } catch {
+    localStorage.removeItem("puntotech_user");
+    return null;
+  }
+};
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<StoredUser | null>(() => getStoredUser());
   const { count, openCart } = useCart();
+  const navigate = useNavigate();
 
   const links = [
     { label: "Inicio", to: "/" },
@@ -19,6 +41,34 @@ const Navbar = () => {
     setIsOpen(false);
     openCart();
   };
+
+  const handleSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const query = searchQuery.trim();
+    if (!query) return;
+    setIsOpen(false);
+    setIsSearchOpen(false);
+    navigate(`/products?search=${encodeURIComponent(query)}`);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("puntotech_user");
+    setUser(null);
+    setIsOpen(false);
+    window.dispatchEvent(new Event("puntotech_user_changed"));
+  };
+
+  useEffect(() => {
+    const syncUser = () => setUser(getStoredUser());
+
+    window.addEventListener("puntotech_user_changed", syncUser);
+    window.addEventListener("storage", syncUser);
+
+    return () => {
+      window.removeEventListener("puntotech_user_changed", syncUser);
+      window.removeEventListener("storage", syncUser);
+    };
+  }, []);
 
   return (
     <motion.nav
@@ -51,12 +101,41 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
-            <button className="text-muted-foreground hover:text-primary transition-colors">
-              <Search size={20} />
-            </button>
-            <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors" title="Iniciar sesion">
-              <User size={20} />
-            </Link>
+            {isSearchOpen ? (
+              <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3">
+                <Search size={16} className="text-muted-foreground" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  autoFocus
+                  placeholder="Buscar producto"
+                  className="h-10 w-44 bg-transparent text-sm outline-none"
+                />
+                <button type="submit" className="text-muted-foreground hover:text-primary">
+                  <Search size={16} />
+                </button>
+                <button type="button" onClick={() => setIsSearchOpen(false)} className="text-muted-foreground hover:text-primary">
+                  <X size={16} />
+                </button>
+              </form>
+            ) : (
+              <button type="button" onClick={() => setIsSearchOpen(true)} className="text-muted-foreground hover:text-primary transition-colors">
+                <Search size={20} />
+              </button>
+            )}
+            {user ? (
+              <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
+                <User size={16} />
+                <span>Hola, {user.name || user.email.split("@")[0]}</span>
+                <button type="button" onClick={handleLogout} className="text-xs text-muted-foreground hover:text-primary">
+                  Salir
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors" title="Iniciar sesion">
+                <User size={20} />
+              </Link>
+            )}
             <button type="button" onClick={handleOpenCart} className="relative text-muted-foreground hover:text-primary transition-colors" title="Carrito">
               <ShoppingCart size={20} />
               {count > 0 && (
@@ -102,11 +181,32 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
+              <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1">
+                <Search size={18} className="text-muted-foreground" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Buscar producto"
+                  className="h-10 w-full bg-transparent text-sm outline-none"
+                />
+                <button type="submit" className="text-muted-foreground hover:text-primary">
+                  <Search size={18} />
+                </button>
+              </form>
               <div className="flex items-center gap-4 pt-4 border-t border-border">
-                <Search size={20} className="text-muted-foreground" />
-                <Link to="/login" onClick={() => setIsOpen(false)}>
-                  <User size={20} className="text-muted-foreground" />
-                </Link>
+                {user ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <User size={20} />
+                    <span>Hola, {user.name || user.email.split("@")[0]}</span>
+                    <button type="button" onClick={handleLogout} className="text-xs text-muted-foreground">
+                      Salir
+                    </button>
+                  </div>
+                ) : (
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <User size={20} className="text-muted-foreground" />
+                  </Link>
+                )}
                 <button type="button" onClick={handleOpenCart} className="relative">
                   <ShoppingCart size={20} className="text-muted-foreground" />
                   {count > 0 && (

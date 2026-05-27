@@ -35,6 +35,7 @@ const Login = () => {
         "puntotech_user",
         JSON.stringify({ id: response.id, name: response.name || name, email: response.email })
       );
+      window.dispatchEvent(new Event("puntotech_user_changed"));
       navigate(next);
     } catch {
       setMessage("No se pudo conectar con el backend.");

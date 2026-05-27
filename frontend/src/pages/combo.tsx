@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Package, Percent, ShoppingCart } from "lucide-react";
-import productPhone from "../assets/productPhone.jpg";
-import productHeadphones from "../assets/productHeadphones.jpg";
-import productAccessories from "../assets/productAccessories.jpg";
 import Navbar from "./navbar";
 import { listarProductos } from "../api";
-import { CartProduct, useCart } from "../context/CartContext";
+import { useCart, type CartProduct } from "../context/CartContext";
+import { getImagesForCombo, getProductImage } from "../utils/productImages";
 
 interface ApiProduct {
   id: string;
@@ -14,65 +12,9 @@ interface ApiProduct {
   brand: string;
   category: string;
   price: string | number;
+  description: string;
   available_stock: number | null;
 }
-
-const combos = [
-  {
-    id: 1,
-    name: "Combo Gamer Pro",
-    description: "Celular + audifonos + cargador rapido",
-    discount: 25,
-    originalPrice: 6447000,
-    comboPrice: 4835000,
-    images: [productPhone, productHeadphones, productAccessories],
-  },
-  {
-    id: 2,
-    name: "Combo Productividad",
-    description: "Laptop + audifonos + accesorios",
-    discount: 20,
-    originalPrice: 11148000,
-    comboPrice: 8918000,
-    images: [productPhone, productHeadphones, productAccessories],
-  },
-  {
-    id: 3,
-    name: "Combo Audio Total",
-    description: "Bafle + audifonos + cable premium",
-    discount: 15,
-    originalPrice: 2798000,
-    comboPrice: 2378000,
-    images: [productHeadphones, productAccessories, productPhone],
-  },
-  {
-    id: 4,
-    name: "Combo Estudio Smart",
-    description: "Tablet + audifonos + cable USB-C",
-    discount: 18,
-    originalPrice: 2747000,
-    comboPrice: 2252000,
-    images: [productPhone, productHeadphones, productAccessories],
-  },
-  {
-    id: 5,
-    name: "Combo Oficina Pro",
-    description: "Laptop + mouse + hub USB-C",
-    discount: 22,
-    originalPrice: 3547000,
-    comboPrice: 2767000,
-    images: [productPhone, productAccessories, productHeadphones],
-  },
-  {
-    id: 6,
-    name: "Combo Movil Plus",
-    description: "Celular + cargador rapido + cable premium",
-    discount: 16,
-    originalPrice: 4577000,
-    comboPrice: 3845000,
-    images: [productPhone, productAccessories, productHeadphones],
-  },
-];
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -81,32 +23,50 @@ const formatPrice = (price: number) =>
     maximumFractionDigits: 0,
   }).format(price);
 
+const normalizeCombo = (product: ApiProduct): CartProduct & { description: string } => ({
+  id: product.id,
+  name: product.name,
+  brand: product.brand,
+  category: product.category,
+  price: Number(product.price),
+  image: getProductImage(product.name, product.category),
+  available_stock: product.available_stock ?? 0,
+  description: product.description,
+});
+
+const discountFromDescription = (description: string) => {
+  const match = description.match(/(\d+)%/);
+  return match ? `${match[1]}% OFF` : "Combo";
+};
+
 const Combos = () => {
   const { addItem, openCart } = useCart();
-  const [apiProducts, setApiProducts] = useState<ApiProduct[]>([]);
-  const [addedId, setAddedId] = useState<number | null>(null);
+  const [combos, setCombos] = useState<Array<CartProduct & { description: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [addedId, setAddedId] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     listarProductos()
       .then((data) => {
-        if (Array.isArray(data)) setApiProducts(data);
+        if (Array.isArray(data)) {
+          setCombos(data.filter((product) => product.category === "Combos").map(normalizeCombo));
+          setLoadError("");
+        } else {
+          setCombos([]);
+          setLoadError("No se pudieron leer los combos de la base de datos.");
+        }
       })
-      .catch(() => setApiProducts([]));
+      .catch(() => {
+        setCombos([]);
+        setLoadError("No se pudo conectar con la base de datos. Revisa que el backend este activo.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleAddCombo = (combo: (typeof combos)[number]) => {
-    const dbProduct = apiProducts.find((product) => product.name === combo.name);
-    const cartProduct: CartProduct = {
-      id: dbProduct?.id || `combo-${combo.id}`,
-      name: combo.name,
-      brand: "PuntoTech",
-      category: "Combos",
-      price: Number(dbProduct?.price || combo.comboPrice),
-      image: combo.images[0],
-      available_stock: dbProduct?.available_stock ?? 20,
-    };
-
-    addItem(cartProduct);
+  const handleAddCombo = (combo: CartProduct) => {
+    addItem(combo);
     openCart();
     setAddedId(combo.id);
     window.setTimeout(() => setAddedId(null), 1200);
@@ -125,65 +85,76 @@ const Combos = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-4">
               <Package size={14} className="text-primary" />
-              <span className="text-sm text-primary font-medium">Ahorra mas con combos</span>
+              <span className="text-sm text-primary font-medium">Ahorra más con combos</span>
             </div>
             <h2 className="font-heading text-3xl md:text-5xl font-bold mb-4">
-              Combos <span className="gradient-text">tecnologicos</span>
+              Combos <span className="gradient-text">tecnológicos</span>
             </h2>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Paquetes exclusivos disenados para darte la mejor experiencia al mejor precio.
+              Paquetes disponibles.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {combos.map((combo, i) => {
-              const justAdded = addedId === combo.id;
+          {loading && <p className="text-center text-muted-foreground">Cargando combos...</p>}
+          {!loading && loadError && <p className="text-center text-red-600">{loadError}</p>}
 
-              return (
-                <motion.div
-                  key={combo.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.15 }}
-                  whileHover={{ y: -6 }}
-                  className="group glass rounded-lg p-6 relative overflow-hidden"
-                >
-                  <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">
-                    <Percent size={14} />
-                    {combo.discount}% OFF
-                  </div>
+          {!loading && !loadError && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {combos.map((combo, i) => {
+                const justAdded = addedId === combo.id;
+                const inStock = combo.available_stock > 0;
 
-                <div className="flex gap-2 mb-6">
-                  {combo.images.map((img, idx) => (
-                    <div key={idx} className="w-20 h-20 rounded-lg bg-muted overflow-hidden">
-                      <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
-                    </div>
-                  ))}
-                </div>
-
-                <h3 className="font-heading font-bold text-xl text-foreground mb-2">{combo.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{combo.description}</p>
-
-                <div className="mb-4">
-                  <span className="text-sm text-muted-foreground line-through">{formatPrice(combo.originalPrice)}</span>
-                  <span className="block font-heading text-2xl font-bold text-primary">
-                    {formatPrice(combo.comboPrice)}
-                  </span>
-                </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleAddCombo(combo)}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-primary/30 text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
+                return (
+                  <motion.div
+                    key={combo.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.08 }}
+                    whileHover={{ y: -6 }}
+                    className="group glass rounded-lg p-6 relative overflow-hidden"
                   >
-                    {justAdded ? "Agregado" : "Agregar combo"}
-                    {justAdded ? <Check size={16} /> : <ShoppingCart size={16} />}
-                  </button>
-                </motion.div>
-              );
-            })}
-          </div>
+                    <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">
+                      <Percent size={14} />
+                      {discountFromDescription(combo.description)}
+                    </div>
+
+                    <div className="flex gap-2 mb-6">
+                      {getImagesForCombo(combo.description).map((img) => (
+                        <div key={img} className="w-20 h-20 rounded-lg bg-muted overflow-hidden">
+                          <img src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
+                        </div>
+                      ))}
+                    </div>
+
+                    <h3 className="font-heading font-bold text-xl text-foreground mb-2">{combo.name}</h3>
+                    <p className="text-sm text-muted-foreground mb-4">{combo.description}</p>
+
+                    <div className="mb-4">
+                      <span className="block font-heading text-2xl font-bold text-primary">
+                        {formatPrice(combo.price)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">Stock: {combo.available_stock}</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={!inStock}
+                      onClick={() => handleAddCombo(combo)}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-primary/30 text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent"
+                    >
+                      {justAdded ? "Agregado" : "Agregar combo"}
+                      {justAdded ? <Check size={16} /> : <ShoppingCart size={16} />}
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && !loadError && combos.length === 0 && (
+            <p className="text-center text-muted-foreground">No hay combos disponibles.</p>
+          )}
         </div>
       </section>
     </>
