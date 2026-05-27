@@ -33,7 +33,7 @@ export const agregarAlCarrito = (usuarioId: string, productoId: string, cantidad
   fetch(`${BASE_URL}/carrito/${usuarioId}/agregar/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ producto_id: productoId, cantidad }),
+    body: JSON.stringify({ product_id: productoId, quantity: cantidad }),
   }).then(res => res.json());
 
 export const eliminarDelCarrito = (usuarioId: string, productoId: string) =>
