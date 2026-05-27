@@ -117,8 +117,22 @@ class CreateOrderView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            order = OrderService().create_order(serializer.validated_data)
-            return Response({"id": order.id, "total": float(order.total), "status": order.status}, status=status.HTTP_201_CREATED)
+            order_service = OrderService()
+            order = order_service.create_order(serializer.validated_data)
+            estimated_delivery_date = order_service.get_estimated_delivery_date(order)
+            return Response(
+                {
+                    "id": order.id,
+                    "total": float(order.total),
+                    "status": order.status,
+                    "estimated_delivery_date": estimated_delivery_date.isoformat(),
+                    "email_sent": bool(getattr(order, "email_sent", False)),
+                    "message": "Compra confirmada. El producto se compro correctamente y te enviamos un correo con la fecha estimada de llegada.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except RuntimeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 

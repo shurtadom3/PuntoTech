@@ -19,18 +19,18 @@ urlpatterns = [
 
     # Productos
     path("productos/", ListProductsView.as_view()),
-    path("productos/categoria/<str:categoria_id>/", ListProductsByCategoryView.as_view()),
-    path("productos/<str:producto_id>/", ProductDetailView.as_view()),
+    path("productos/categoria/<str:category_id>/", ListProductsByCategoryView.as_view()),
+    path("productos/<str:product_id>/", ProductDetailView.as_view()),
 
     # Carrito
-    path("carrito/<str:usuario_id>/", ViewCartView.as_view()),
-    path("carrito/<str:usuario_id>/agregar/", AddCartItemView.as_view()),
-    path("carrito/<str:usuario_id>/eliminar/<str:producto_id>/", RemoveCartItemView.as_view()),
+    path("carrito/<str:user_id>/", ViewCartView.as_view()),
+    path("carrito/<str:user_id>/agregar/", AddCartItemView.as_view()),
+    path("carrito/<str:user_id>/eliminar/<str:product_id>/", RemoveCartItemView.as_view()),
 
     # Pedidos
     path("pedidos/crear/", CreateOrderView.as_view()),
-    path("pedidos/<str:usuario_id>/", ListOrdersView.as_view()),
+    path("pedidos/<str:user_id>/", ListOrdersView.as_view()),
 
     # Recomendaciones
-    path("recomendaciones/<str:usuario_id>/", RecommendationsView.as_view()),
+    path("recomendaciones/<str:user_id>/", RecommendationsView.as_view()),
 ]
