@@ -12,6 +12,11 @@ class UserRegistrationSerializer(serializers.Serializer):
     preferred_brands = serializers.CharField(max_length=255, required=False, default="")
 
 
+class UserLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(min_length=6, write_only=True)
+
+
 class UpdateProfileSerializer(serializers.Serializer):
     budget = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
     usage_type = serializers.CharField(max_length=100, required=False)

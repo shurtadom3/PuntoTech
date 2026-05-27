@@ -13,7 +13,7 @@ class NotifierFactory:
     @staticmethod
     def create():
         env = os.getenv("ENV_TYPE", "DEV").upper()
-        if env == "PROD":
+        has_smtp_credentials = bool(os.getenv("SMTP_USER") and os.getenv("SMTP_PASS"))
+        if env == "PROD" or has_smtp_credentials:
             return EmailReal()
-        else:
-            return EmailMock()
+        return EmailMock()

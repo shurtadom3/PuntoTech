@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import homeBack from "../assets/homeBack.jpg";
 import { Link } from "react-router-dom";
 
@@ -20,16 +20,6 @@ const Home = () => {
 
       <div className="container mx-auto px-4 md:px-6 relative z-10 pt-20">
         <div className="max-w-2xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-6"
-          >
-            <Zap size={14} className="text-primary" />
-            <span className="text-sm text-primary font-medium">Stock inteligente en tiempo real</span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -65,12 +55,12 @@ const Home = () => {
               Explorar productos
               <ArrowRight size={18} />
             </Link>
-            <a
-              href="#combos"
+            <Link
+              to="/combo"
               className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-lg border border-border text-foreground font-semibold hover:border-primary/50 hover:text-primary transition-colors"
             >
               Ver combos tech
-            </a>
+            </Link>
           </motion.div>
 
           {/* Stats */}

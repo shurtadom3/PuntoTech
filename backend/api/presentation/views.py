@@ -8,7 +8,7 @@ from api.application.services import (
     CartService, OrderService, RecommendationService
 )
 from api.presentation.serializers import (
-    UserRegistrationSerializer, UpdateProfileSerializer,
+    UserLoginSerializer, UserRegistrationSerializer, UpdateProfileSerializer,
     AddCartItemSerializer, CreateOrderSerializer,
     ProductSerializer, OrderSerializer
 )
@@ -31,19 +31,38 @@ class RegisterUserView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 
 
+class LoginUserView(APIView):
+    def post(self, request):
+        serializer = UserLoginSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = UserService().login(**serializer.validated_data)
+            return Response({"id": user.id, "name": user.name, "email": user.email}, status=status.HTTP_200_OK)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 class UpdateProfileView(APIView):
-    def put(self, request, user_id):
+    def put(self, request, usuario_id):
         serializer = UpdateProfileSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            profile = UserService().update_profile(user_id, serializer.validated_data)
+            profile = UserService().update_profile(usuario_id, serializer.validated_data)
             return Response({"message": "Profile updated", "usage_type": profile.usage_type}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
 
 # ── Products ──────────────────────────────────────────────────────────────────
+
+class ListProductsView(APIView):
+    def get(self, request):
+        products = ProductService().list_all()
+        data = ProductSerializer(products, many=True).data
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class ListProductsByCategoryView(APIView):
     def get(self, request, category_id):
@@ -98,8 +117,22 @@ class CreateOrderView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            order = OrderService().create_order(serializer.validated_data)
-            return Response({"id": order.id, "total": float(order.total), "status": order.status}, status=status.HTTP_201_CREATED)
+            order_service = OrderService()
+            order = order_service.create_order(serializer.validated_data)
+            estimated_delivery_date = order_service.get_estimated_delivery_date(order)
+            return Response(
+                {
+                    "id": order.id,
+                    "total": float(order.total),
+                    "status": order.status,
+                    "estimated_delivery_date": estimated_delivery_date.isoformat(),
+                    "email_sent": bool(getattr(order, "email_sent", False)),
+                    "message": "Compra confirmada. El producto se compro correctamente y te enviamos un correo con la fecha estimada de llegada.",
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        except RuntimeError as e:
+            return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 
