@@ -50,7 +50,7 @@ class OrderBuilder:
             user_id=self._user_id,
             total=self._total,
             shipping_address=self._address,
-            status="pending",
+            status="confirmed",
         )
 
         for item in self._products:
