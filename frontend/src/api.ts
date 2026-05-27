@@ -8,8 +8,18 @@ export const registrarUsuario = (datos: object) =>
     body: JSON.stringify(datos),
   }).then(res => res.json());
 
+export const iniciarSesion = (datos: object) =>
+  fetch(`${BASE_URL}/usuarios/login/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  }).then(res => res.json());
+
 // Productos
-export const listarProductos = (categoriaId: string) =>
+export const listarProductos = () =>
+  fetch(`${BASE_URL}/productos/`).then(res => res.json());
+
+export const listarProductosPorCategoria = (categoriaId: string) =>
   fetch(`${BASE_URL}/productos/categoria/${categoriaId}/`).then(res => res.json());
 
 export const detalleProducto = (productoId: string) =>
@@ -26,12 +36,17 @@ export const agregarAlCarrito = (usuarioId: string, productoId: string, cantidad
     body: JSON.stringify({ producto_id: productoId, cantidad }),
   }).then(res => res.json());
 
+export const eliminarDelCarrito = (usuarioId: string, productoId: string) =>
+  fetch(`${BASE_URL}/carrito/${usuarioId}/eliminar/${productoId}/`, {
+    method: "DELETE",
+  }).then(res => res.json());
+
 // Pedidos
-export const crearPedido = (usuarioId: string, direccion: string) =>
+export const crearPedido = (usuarioId: string, shipping_address: string) =>
   fetch(`${BASE_URL}/pedidos/crear/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ usuario_id: usuarioId, direccion_envio: direccion }),
+    body: JSON.stringify({ user_id: usuarioId, shipping_address }),
   }).then(res => res.json());
 
 // Recomendaciones

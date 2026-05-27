@@ -1,9 +1,7 @@
 import Navbar from "../pages/navbar";
 import Home from "../pages/home";
 import Categories from "../pages/categories";
-import Products from "../pages/products";
 import Footer from "../pages/footer";
-import Combos from "../pages/combo";
 
 const Index = () => {
   return (
@@ -11,7 +9,6 @@ const Index = () => {
       <Navbar />
       <Home />
       <Categories />
-      <Products />
       <Footer />
     </main>
   );
