@@ -1,6 +1,7 @@
 from django.urls import path
 from api.presentation.views import (
-    health, RegisterUserView, UpdateProfileView,
+    health, LoginUserView, RegisterUserView, UpdateProfileView,
+    ListProductsView,
     ListProductsByCategoryView, ProductDetailView,
     AddCartItemView, ViewCartView, RemoveCartItemView,
     CreateOrderView, ListOrdersView,
@@ -13,9 +14,11 @@ urlpatterns = [
 
     # Usuarios
     path("usuarios/registro/", RegisterUserView.as_view()),
+    path("usuarios/login/", LoginUserView.as_view()),
     path("usuarios/<str:usuario_id>/perfil/", UpdateProfileView.as_view()),
 
     # Productos
+    path("productos/", ListProductsView.as_view()),
     path("productos/categoria/<str:categoria_id>/", ListProductsByCategoryView.as_view()),
     path("productos/<str:producto_id>/", ProductDetailView.as_view()),
 
