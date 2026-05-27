@@ -26,6 +26,14 @@ class UserService:
         Cart.objects.create(user=user)
         return user
 
+    def login(self, email: str, password: str):
+        try:
+            user = User.objects.get(email=email, password=password)
+        except User.DoesNotExist:
+            raise ValueError("Correo o contrasena incorrectos.")
+        Cart.objects.get_or_create(user=user)
+        return user
+
     def update_profile(self, user_id: str, data: dict):
         try:
             profile = UserProfile.objects.get(user_id=user_id)
@@ -40,6 +48,9 @@ class UserService:
 
 # ProductService
 class ProductService:
+
+    def list_all(self) -> list:
+        return list(Product.objects.select_related("stock", "category").all().order_by("category__name", "name"))
 
     def list_by_category(self, category_id: str) -> list:
         return list(Product.objects.filter(category_id=category_id).select_related("stock"))
