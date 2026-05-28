@@ -1,16 +1,55 @@
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Cable, Headphones, Laptop, Smartphone, Speaker } from "lucide-react";
+import { Cable, Grid2X2, Headphones, Laptop, Smartphone, Speaker, Tablet } from "lucide-react";
+import { listarProductos } from "../api";
 
-const categories = [
-  { icon: Smartphone, name: "Celulares", count: 120 },
-  { icon: Laptop, name: "Computadores", count: 85 },
-  { icon: Headphones, name: "Audifonos", count: 64 },
-  { icon: Speaker, name: "Bafles", count: 42 },
-  { icon: Cable, name: "Accesorios", count: 200 },
-];
+interface ApiProduct {
+  category: string;
+}
+
+const categoryIcons = {
+  Celulares: Smartphone,
+  Computadores: Laptop,
+  Audifonos: Headphones,
+  Bafles: Speaker,
+  Accesorios: Cable,
+  Tablets: Tablet,
+};
 
 const Categories = () => {
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    listarProductos()
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setProducts(data);
+          setLoadError("");
+        } else {
+          setLoadError("No se pudo leer el conteo de productos.");
+        }
+      })
+      .catch(() => setLoadError("Activa el backend para ver los conteos reales."));
+  }, []);
+
+  const categories = useMemo(() => {
+    const counts = products.reduce<Record<string, number>>((acc, product) => {
+      acc[product.category] = (acc[product.category] || 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .filter(([name]) => name !== "Combos")
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([name, count]) => ({
+        icon: categoryIcons[name as keyof typeof categoryIcons] || Grid2X2,
+        name,
+        count,
+      }));
+  }, [products]);
+
   return (
     <section id="categorias" className="py-20 md:py-28">
       <div className="container mx-auto px-4 md:px-6">
@@ -26,9 +65,10 @@ const Categories = () => {
           <p className="text-muted-foreground max-w-md mx-auto">
             Encuentra exactamente lo que buscas en nuestra seleccion curada de tecnologia.
           </p>
+          {loadError && <p className="mt-3 text-sm text-muted-foreground">{loadError}</p>}
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
           {categories.map((cat, i) => {
             const Icon = cat.icon;
 
