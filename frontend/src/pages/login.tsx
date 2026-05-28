@@ -4,6 +4,10 @@ import { LogIn, UserPlus } from "lucide-react";
 import Navbar from "./navbar";
 import { iniciarSesion, registrarUsuario } from "../api";
 
+const notifyAuth = (message: string) => {
+  window.dispatchEvent(new CustomEvent("puntotech_auth_message", { detail: message }));
+};
+
 const Login = () => {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
@@ -36,7 +40,12 @@ const Login = () => {
         JSON.stringify({ id: response.id, name: response.name || name, email: response.email })
       );
       window.dispatchEvent(new Event("puntotech_user_changed"));
-      navigate(next);
+      notifyAuth(
+        mode === "login"
+          ? `Inicio de sesion confirmado. Bienvenido, ${response.name || email.split("@")[0]}.`
+          : `Registro confirmado. Bienvenido a PuntoTech, ${name}.`
+      );
+      window.setTimeout(() => navigate(next), 900);
     } catch {
       setMessage("No se pudo conectar con el backend.");
     } finally {
