@@ -99,4 +99,31 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .product-flip-card {
+    perspective: 1200px;
+  }
+
+  .product-flip-inner {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.65s ease;
+  }
+
+  .product-flip-card:hover .product-flip-inner,
+  .product-flip-card:focus-within .product-flip-inner {
+    transform: rotateY(180deg);
+  }
+
+  .product-flip-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 0.5rem;
+    backface-visibility: hidden;
+    overflow: hidden;
+  }
+
+  .product-flip-back {
+    transform: rotateY(180deg);
+  }
 }

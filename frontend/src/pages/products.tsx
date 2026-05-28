@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpDown, Check, Search, SlidersHorizontal, Star, ShoppingCart } from "lucide-react";
+import { ArrowUpDown, Check, Info, Rotate3D, Search, SlidersHorizontal, Star, ShoppingCart } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import Navbar from "./navbar";
 import { listarProductos } from "../api";
@@ -13,6 +13,7 @@ interface ApiProduct {
   brand: string;
   category: string;
   price: string | number;
+  description?: string;
   available_stock: number | null;
 }
 
@@ -29,6 +30,7 @@ const normalizeProduct = (product: ApiProduct): CartProduct => ({
   brand: product.brand,
   category: product.category,
   price: Number(product.price),
+  description: product.description || "Producto seleccionado por PuntoTech con garantia y soporte para que compres con confianza.",
   image: getProductImage(product.name, product.category),
   available_stock: product.available_stock ?? 0,
 });
@@ -238,45 +240,87 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                     whileHover={{ y: -5 }}
-                    className="group glass rounded-lg overflow-hidden"
+                    className="group product-flip-card h-[520px] rounded-lg"
+                    tabIndex={0}
                   >
-                    <div className="relative aspect-square bg-muted overflow-hidden">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      {!inStock && (
-                        <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
-                          <span className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">
-                            Agotado
-                          </span>
+                    <div className="product-flip-inner h-full">
+                      <div className="product-flip-face product-flip-front glass overflow-hidden">
+                        <div className="relative aspect-square bg-muted overflow-hidden">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold text-primary shadow-sm">
+                            <Rotate3D size={14} />
+                            Info
+                          </div>
+                          {!inStock && (
+                            <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
+                              <span className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">
+                                Agotado
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    <div className="p-4 text-left">
-                      <p className="text-xs text-muted-foreground mb-1">{product.category}</p>
-                      <h3 className="font-heading font-semibold text-lg mb-1">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{product.brand}</p>
+                        <div className="p-4 text-left">
+                          <p className="text-xs text-muted-foreground mb-1">{product.category}</p>
+                          <h3 className="font-heading font-semibold text-lg mb-1">{product.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-3">{product.brand}</p>
 
-                      <div className="flex items-center gap-1 mb-4">
-                        <Star size={14} className="fill-primary text-primary" />
-                        <span className="text-sm">4.8</span>
-                        <span className="text-xs text-muted-foreground">Stock: {product.available_stock}</span>
+                          <div className="flex items-center gap-1 mb-4">
+                            <Star size={14} className="fill-primary text-primary" />
+                            <span className="text-sm">4.8</span>
+                            <span className="text-xs text-muted-foreground">Stock: {product.available_stock}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-heading font-bold text-lg">{formatPrice(product.price)}</span>
+                            <button
+                              type="button"
+                              disabled={!inStock}
+                              onClick={() => handleAdd(product)}
+                              className="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                            >
+                              {justAdded ? <Check size={18} /> : <ShoppingCart size={18} />}
+                              <span className="hidden md:inline text-sm">{justAdded ? "Listo" : "Agregar"}</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="font-heading font-bold text-lg">{formatPrice(product.price)}</span>
-                        <button
-                          type="button"
-                          disabled={!inStock}
-                          onClick={() => handleAdd(product)}
-                          className="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
-                        >
-                          {justAdded ? <Check size={18} /> : <ShoppingCart size={18} />}
-                          <span className="hidden md:inline text-sm">{justAdded ? "Listo" : "Agregar"}</span>
-                        </button>
+                      <div className="product-flip-face product-flip-back glass flex flex-col p-5 text-left">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <span className="rounded-lg bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                            {product.category}
+                          </span>
+                          <Info size={18} className="text-primary" />
+                        </div>
+                        <h3 className="font-heading text-xl font-bold leading-tight">{product.name}</h3>
+                        <p className="mt-1 text-sm font-semibold text-muted-foreground">{product.brand}</p>
+                        <p className="mt-5 text-sm leading-6 text-muted-foreground">{product.description}</p>
+                        <div className="mt-auto space-y-3 pt-5">
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-lg border border-border bg-background p-3">
+                              <p className="text-xs text-muted-foreground">Precio</p>
+                              <p className="font-heading font-bold">{formatPrice(product.price)}</p>
+                            </div>
+                            <div className="rounded-lg border border-border bg-background p-3">
+                              <p className="text-xs text-muted-foreground">Stock</p>
+                              <p className="font-heading font-bold">{product.available_stock} unidades</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={!inStock}
+                            onClick={() => handleAdd(product)}
+                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                          >
+                            {justAdded ? <Check size={18} /> : <ShoppingCart size={18} />}
+                            {justAdded ? "Agregado" : "Agregar al carrito"}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
