@@ -18,7 +18,7 @@ class EmailReal:
 
         msg = MIMEText(body)
         msg["Subject"] = subject
-        msg["From"] = self.smtp_user
+        msg["From"] = f"PuntoTech <{self.smtp_user}>"
         msg["To"] = recipient
         try:
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
