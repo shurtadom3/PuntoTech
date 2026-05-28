@@ -22,6 +22,10 @@ const getStoredUser = (): StoredUser | null => {
   }
 };
 
+const notifyAuth = (message: string) => {
+  window.dispatchEvent(new CustomEvent("puntotech_auth_message", { detail: message }));
+};
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -52,10 +56,13 @@ const Navbar = () => {
   };
 
   const handleLogout = () => {
+    const displayName = user?.name || user?.email.split("@")[0] || "usuario";
     localStorage.removeItem("puntotech_user");
     setUser(null);
     setIsOpen(false);
     window.dispatchEvent(new Event("puntotech_user_changed"));
+    notifyAuth(`Cierre de sesion confirmado. Hasta pronto, ${displayName}.`);
+    navigate("/");
   };
 
   useEffect(() => {
