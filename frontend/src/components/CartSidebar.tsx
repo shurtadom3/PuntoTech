@@ -2,7 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, X, ShoppingBag } from "lucide-react";
-import { agregarAlCarrito, crearPedido } from "../api";
+import { crearPedidoDesdeItems } from "../api";
 import { useCart } from "../context/CartContext";
 
 const formatPrice = (price: number) =>
@@ -52,10 +52,11 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
     setLoading(true);
     setMessage("");
     try {
-      for (const item of items) {
-        await agregarAlCarrito(user.id, item.product.id, item.quantity);
-      }
-      const order = await crearPedido(user.id, address);
+      const order = await crearPedidoDesdeItems(
+        user.id,
+        address,
+        items.map((item) => ({ product_id: item.product.id, quantity: item.quantity }))
+      );
       if (order.error) {
         setMessage(order.error);
         return;
