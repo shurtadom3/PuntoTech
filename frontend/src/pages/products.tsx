@@ -17,6 +17,7 @@ import Navbar from "./navbar";
 import { listarProductos, obtenerCatalogoAliado, obtenerTasaCambio } from "../api";
 import type { ApiProduct, AlliedCatalog, ExchangeRate } from "../api";
 import { useCart, type CartProduct } from "../context/CartContext";
+import { useGettext } from "../i18n/gettext";
 import { getProductImage } from "../utils/productImages";
 
 const formatPrice = (price: number) =>
@@ -47,6 +48,7 @@ const normalizeProduct = (product: ApiProduct): CartProduct => ({
 });
 
 const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
+  const { gettext: t } = useGettext();
   const { addItem, openCart } = useCart();
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<CartProduct[]>([]);
@@ -81,15 +83,15 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
           setLoadError("");
         } else {
           setProducts([]);
-          setLoadError("No se pudieron leer los productos de la base de datos.");
+          setLoadError(t("No se pudieron leer los productos de la base de datos."));
         }
       })
       .catch(() => {
         setProducts([]);
-        setLoadError("No se pudo conectar con la base de datos. Revisa que el backend este activo.");
+        setLoadError(t("No se pudo conectar con la base de datos. Revisa que el backend este activo."));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     obtenerCatalogoAliado()
@@ -99,7 +101,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
       })
       .catch(() => {
         setAlliedProducts([]);
-        setAlliedMessage("No se pudo cargar el catalogo aliado.");
+        setAlliedMessage(t("No se pudo cargar el catalogo aliado."));
       });
 
     setExchangeStatus("loading");
@@ -115,7 +117,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
         setExchangeInfo(null);
         setExchangeStatus("error");
       });
-  }, []);
+  }, [t]);
 
   const categories = useMemo(
     () => ["Todas", ...Array.from(new Set(products.map((product) => product.category)))],
@@ -123,10 +125,10 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
   );
 
   const priceBands = [
-    { label: "Todos", value: "todos", min: 0, max: Infinity },
-    { label: "Menos de $500k", value: "bajo", min: 0, max: 500000 },
+    { label: t("Todos"), value: "todos", min: 0, max: Infinity },
+    { label: t("Menos de $500k"), value: "bajo", min: 0, max: 500000 },
     { label: "$500k - $2M", value: "medio", min: 500000, max: 2000000 },
-    { label: "Mas de $2M", value: "alto", min: 2000000, max: Infinity },
+    { label: t("Mas de $2M"), value: "alto", min: 2000000, max: Infinity },
   ];
 
   const filteredProducts = useMemo(() => {
@@ -165,8 +167,8 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
       <section className={`bg-background pb-16 ${showNavbar ? "min-h-screen pt-24 md:pt-28" : "py-16 md:py-20"}`}>
         <div className="container mx-auto px-4 md:px-6">
           <div className="mb-8 text-left">
-            <p className="text-sm font-semibold text-primary mb-2">Catalogo PuntoTech</p>
-            <h1 className="font-heading text-3xl md:text-5xl font-bold text-foreground">Productos</h1>
+            <p className="text-sm font-semibold text-primary mb-2">{t("Catalogo PuntoTech")}</p>
+            <h1 className="font-heading text-3xl md:text-5xl font-bold text-foreground">{t("Productos")}</h1>
           </div>
 
           <section className="mb-8 rounded-lg border border-border bg-card p-4 shadow-sm md:p-5">
@@ -176,34 +178,34 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                   <WalletCards size={21} />
                 </div>
                 <div>
-                  <h2 className="font-heading text-lg font-bold text-foreground">Cambio de moneda por API externa</h2>
+                  <h2 className="font-heading text-lg font-bold text-foreground">{t("Cambio de moneda por API externa")}</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    El backend consulta la tasa USD/COP mediante el Adapter y la interfaz convierte los precios del catalogo.
+                    {t("El backend consulta la tasa USD/COP mediante el Adapter y la interfaz convierte los precios del catalogo.")}
                   </p>
                 </div>
               </div>
 
               <div className="rounded-lg border border-border bg-background p-4 text-left md:min-w-[280px]">
                 {exchangeStatus === "loading" && (
-                  <p className="text-sm font-semibold text-muted-foreground">Consultando tasa de cambio...</p>
+                  <p className="text-sm font-semibold text-muted-foreground">{t("Consultando tasa de cambio...")}</p>
                 )}
                 {exchangeStatus === "ready" && exchangeRate && (
                   <>
                     <p className="text-xs font-semibold uppercase text-muted-foreground">
-                      1 {exchangeInfo?.from || "USD"} equivale a
+                      {t("1 {from} equivale a", { from: exchangeInfo?.from || "USD" })}
                     </p>
                     <p className="mt-1 font-heading text-2xl font-bold text-primary">{formatPrice(exchangeRate)}</p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {exchangeInfo?.date ? `Fecha: ${exchangeInfo.date}` : "Fecha no informada por el proveedor"}
+                      {exchangeInfo?.date ? t("Fecha: {date}", { date: exchangeInfo.date }) : t("Fecha no informada por el proveedor")}
                     </p>
                     <p className="mt-1 max-w-[260px] truncate text-xs text-muted-foreground">
-                      Proveedor: {exchangeInfo?.provider || "API externa configurada"}
+                      {t("Proveedor: {provider}", { provider: exchangeInfo?.provider || t("API externa configurada") })}
                     </p>
                   </>
                 )}
                 {exchangeStatus === "error" && (
                   <p className="text-sm font-semibold text-red-600">
-                    No se pudo consultar la API externa de cambio de moneda.
+                    {t("No se pudo consultar la API externa de cambio de moneda.")}
                   </p>
                 )}
               </div>
@@ -214,40 +216,40 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal size={18} className="text-primary" />
-                <h2 className="font-heading font-semibold">Encontrar productos</h2>
+                <h2 className="font-heading font-semibold">{t("Encontrar productos")}</h2>
               </div>
-              <span className="text-sm text-muted-foreground">{filteredProducts.length} resultados</span>
+              <span className="text-sm text-muted-foreground">{t("{count} resultados", { count: filteredProducts.length })}</span>
             </div>
 
             <div className="grid gap-3 lg:grid-cols-[1.4fr_0.8fr_0.9fr_0.8fr]">
               <label className="block text-sm font-medium">
-                Buscar
+                {t("Buscar")}
                 <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-background px-3">
                   <Search size={16} className="text-muted-foreground" />
                   <input
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="Nombre, marca o categoria"
+                    placeholder={t("Nombre, marca o categoria")}
                     className="h-11 w-full bg-transparent text-sm outline-none"
                   />
                 </div>
               </label>
 
               <label className="block text-sm font-medium">
-                Categoria
+                {t("Categoria")}
                 <select
                   value={selectedCategory}
                   onChange={(event) => setSelectedCategory(event.target.value)}
                   className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary"
                 >
                   {categories.map((category) => (
-                    <option key={category}>{category}</option>
+                    <option key={category}>{t(category)}</option>
                   ))}
                 </select>
               </label>
 
               <label className="block text-sm font-medium">
-                Precio
+                {t("Precio")}
                 <select
                   value={priceBand}
                   onChange={(event) => setPriceBand(event.target.value)}
@@ -262,7 +264,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
               </label>
 
               <label className="block text-sm font-medium">
-                Ordenar
+                {t("Ordenar")}
                 <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-background px-3">
                   <ArrowUpDown size={16} className="text-muted-foreground" />
                   <select
@@ -270,10 +272,10 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                     onChange={(event) => setSortBy(event.target.value)}
                     className="h-11 w-full bg-transparent text-sm outline-none"
                   >
-                    <option value="relevancia">Nombre</option>
-                    <option value="precio-menor">Menor precio</option>
-                    <option value="precio-mayor">Mayor precio</option>
-                    <option value="stock">Mayor stock</option>
+                    <option value="relevancia">{t("Nombre")}</option>
+                    <option value="precio-menor">{t("Menor precio")}</option>
+                    <option value="precio-mayor">{t("Mayor precio")}</option>
+                    <option value="stock">{t("Mayor stock")}</option>
                   </select>
                 </div>
               </label>
@@ -289,7 +291,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                     : "border-border bg-background text-muted-foreground hover:border-primary hover:text-primary"
                 }`}
               >
-                Disponibles ahora
+                {t("Disponibles ahora")}
               </button>
               <button
                 type="button"
@@ -302,12 +304,12 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                 }}
                 className="text-sm font-semibold text-primary hover:underline"
               >
-                Limpiar busqueda
+                {t("Limpiar busqueda")}
               </button>
             </div>
           </div>
 
-          {loading && <p className="text-center text-muted-foreground">Cargando productos...</p>}
+          {loading && <p className="text-center text-muted-foreground">{t("Cargando productos...")}</p>}
           {!loading && loadError && <p className="text-center text-red-600">{loadError}</p>}
 
           {!loading && !loadError && (
@@ -336,12 +338,12 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                           />
                           <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-lg bg-white/90 px-2 py-1 text-xs font-semibold text-primary shadow-sm">
                             <Rotate3D size={14} />
-                            Info
+                            {t("Info")}
                           </div>
                           {!inStock && (
                             <div className="absolute inset-0 bg-white/75 flex items-center justify-center">
                               <span className="px-4 py-2 rounded-lg bg-muted text-muted-foreground text-sm font-medium">
-                                Agotado
+                                {t("Agotado")}
                               </span>
                             </div>
                           )}
@@ -355,7 +357,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                           <div className="flex items-center gap-1 mb-4">
                             <Star size={14} className="fill-primary text-primary" />
                             <span className="text-sm">4.8</span>
-                            <span className="text-xs text-muted-foreground">Stock: {product.available_stock}</span>
+                            <span className="text-xs text-muted-foreground">{t("Stock")}: {product.available_stock}</span>
                           </div>
 
                           <div className="flex items-center justify-between gap-3">
@@ -363,7 +365,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                               <span className="block font-heading font-bold text-lg">{formatPrice(product.price)}</span>
                               {exchangeRate && (
                                 <span className="block text-xs text-muted-foreground">
-                                  Ref. {formatUsd(product.price / exchangeRate)}
+                                  {t("Ref. {price}", { price: formatUsd(product.price / exchangeRate) })}
                                 </span>
                               )}
                             </span>
@@ -374,7 +376,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                               className="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-lg bg-primary px-3 text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                             >
                               {justAdded ? <Check size={18} /> : <ShoppingCart size={18} />}
-                              <span className="hidden md:inline text-sm">{justAdded ? "Listo" : "Agregar"}</span>
+                              <span className="hidden md:inline text-sm">{justAdded ? t("Listo") : t("Agregar")}</span>
                             </button>
                           </div>
                         </div>
@@ -393,15 +395,15 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                         <div className="mt-auto space-y-3 pt-5">
                           <div className="grid grid-cols-2 gap-3 text-sm">
                             <div className="rounded-lg border border-border bg-background p-3">
-                              <p className="text-xs text-muted-foreground">Precio</p>
+                              <p className="text-xs text-muted-foreground">{t("Precio")}</p>
                               <p className="font-heading font-bold">{formatPrice(product.price)}</p>
                               {exchangeRate && (
-                                <p className="text-xs text-muted-foreground">Ref. {formatUsd(product.price / exchangeRate)}</p>
+                                <p className="text-xs text-muted-foreground">{t("Ref. {price}", { price: formatUsd(product.price / exchangeRate) })}</p>
                               )}
                             </div>
                             <div className="rounded-lg border border-border bg-background p-3">
-                              <p className="text-xs text-muted-foreground">Stock</p>
-                              <p className="font-heading font-bold">{product.available_stock} unidades</p>
+                              <p className="text-xs text-muted-foreground">{t("Stock")}</p>
+                              <p className="font-heading font-bold">{t("{count} unidades", { count: product.available_stock })}</p>
                             </div>
                           </div>
                           <button
@@ -411,7 +413,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                           >
                             {justAdded ? <Check size={18} /> : <ShoppingCart size={18} />}
-                            {justAdded ? "Agregado" : "Agregar al carrito"}
+                            {justAdded ? t("Agregado") : t("Agregar al carrito")}
                           </button>
                         </div>
                       </div>
@@ -423,7 +425,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
           )}
 
           {!loading && !loadError && filteredProducts.length === 0 && (
-            <p className="mt-12 text-center text-muted-foreground">No hay productos con esos filtros.</p>
+            <p className="mt-12 text-center text-muted-foreground">{t("No hay productos con esos filtros.")}</p>
           )}
 
           {!loading && (
@@ -431,9 +433,9 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
               <div className="mb-5 flex items-center gap-3">
                 <Cable size={20} className="text-primary" />
                 <div>
-                  <h2 className="font-heading text-2xl font-bold">Productos de aliados</h2>
+                  <h2 className="font-heading text-2xl font-bold">{t("Productos de aliados")}</h2>
                   <p className="text-sm text-muted-foreground">
-                    Catalogo consumido desde el servicio JSON del equipo aliado.
+                    {t("Catalogo consumido desde el servicio JSON del equipo aliado.")}
                   </p>
                 </div>
               </div>
@@ -451,7 +453,7 @@ const Products = ({ showNavbar = true }: { showNavbar?: boolean }) => {
                 </div>
               ) : (
                 <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
-                  {alliedMessage || "Configura ALLIED_SERVICE_URL para mostrar datos reales del equipo aliado."}
+                  {alliedMessage || t("Configura ALLIED_SERVICE_URL para mostrar datos reales del equipo aliado.")}
                 </p>
               )}
             </section>

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Cable, Grid2X2, Headphones, Laptop, Smartphone, Speaker, Tablet } from "lucide-react";
 import { listarProductos } from "../api";
+import { useGettext } from "../i18n/gettext";
 
 interface ApiProduct {
   category: string;
@@ -18,6 +19,7 @@ const categoryIcons = {
 };
 
 const Categories = () => {
+  const { gettext: t } = useGettext();
   const [products, setProducts] = useState<ApiProduct[]>([]);
   const [loadError, setLoadError] = useState("");
 
@@ -28,11 +30,11 @@ const Categories = () => {
           setProducts(data);
           setLoadError("");
         } else {
-          setLoadError("No se pudo leer el conteo de productos.");
+          setLoadError(t("No se pudo leer el conteo de productos."));
         }
       })
-      .catch(() => setLoadError("Activa el backend para ver los conteos reales."));
-  }, []);
+      .catch(() => setLoadError(t("Activa el backend para ver los conteos reales.")));
+  }, [t]);
 
   const categories = useMemo(() => {
     const counts = products.reduce<Record<string, number>>((acc, product) => {
@@ -60,10 +62,10 @@ const Categories = () => {
           className="text-center mb-14"
         >
           <h2 className="font-heading text-3xl md:text-5xl font-bold mb-4">
-            Explora por <span className="gradient-text">categoria</span>
+            {t("Explora por")} <span className="gradient-text">{t("categoria")}</span>
           </h2>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Encuentra exactamente lo que buscas en nuestra seleccion curada de tecnologia.
+            {t("Encuentra exactamente lo que buscas en nuestra seleccion curada de tecnologia.")}
           </p>
           {loadError && <p className="mt-3 text-sm text-muted-foreground">{loadError}</p>}
         </motion.div>
@@ -88,8 +90,8 @@ const Categories = () => {
                   <div className="w-14 h-14 mx-auto rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Icon size={24} className="text-primary" />
                   </div>
-                  <h3 className="font-heading font-semibold text-foreground mb-1">{cat.name}</h3>
-                  <p className="text-sm text-muted-foreground">{cat.count} productos</p>
+                  <h3 className="font-heading font-semibold text-foreground mb-1">{t(cat.name)}</h3>
+                  <p className="text-sm text-muted-foreground">{t("{count} productos", { count: cat.count })}</p>
                 </Link>
               </motion.div>
             );

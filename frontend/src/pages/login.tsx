@@ -3,12 +3,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { LogIn, UserPlus } from "lucide-react";
 import Navbar from "./navbar";
 import { iniciarSesion, registrarUsuario } from "../api";
+import { useGettext } from "../i18n/gettext";
 
 const notifyAuth = (message: string) => {
   window.dispatchEvent(new CustomEvent("puntotech_auth_message", { detail: message }));
 };
 
 const Login = () => {
+  const { gettext: t } = useGettext();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,12 +44,12 @@ const Login = () => {
       window.dispatchEvent(new Event("puntotech_user_changed"));
       notifyAuth(
         mode === "login"
-          ? `Inicio de sesion confirmado. Bienvenido, ${response.name || email.split("@")[0]}.`
-          : `Registro confirmado. Bienvenido a PuntoTech, ${name}.`
+          ? t("Inicio de sesion confirmado. Bienvenido, {name}.", { name: response.name || email.split("@")[0] })
+          : t("Registro confirmado. Bienvenido a PuntoTech, {name}.", { name })
       );
       window.setTimeout(() => navigate(next), 900);
     } catch {
-      setMessage("No se pudo conectar con el backend.");
+      setMessage(t("No se pudo conectar con el backend."));
     } finally {
       setLoading(false);
     }
@@ -60,9 +62,9 @@ const Login = () => {
         <div className="container mx-auto max-w-md px-4 md:px-6">
           <section className="glass rounded-lg p-6 text-left">
             <div className="mb-6">
-              <p className="text-sm font-semibold text-primary mb-2">Solo para comprar</p>
+              <p className="text-sm font-semibold text-primary mb-2">{t("Solo para comprar")}</p>
               <h1 className="font-heading text-3xl font-bold">
-                {mode === "login" ? "Iniciar sesion" : "Crear cuenta"}
+                {mode === "login" ? t("Iniciar sesion") : t("Crear cuenta")}
               </h1>
             </div>
 
@@ -74,7 +76,7 @@ const Login = () => {
                 }`}
               >
                 <LogIn size={16} />
-                Entrar
+                {t("Entrar")}
               </button>
               <button
                 onClick={() => setMode("register")}
@@ -83,14 +85,14 @@ const Login = () => {
                 }`}
               >
                 <UserPlus size={16} />
-                Registro
+                {t("Registro")}
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
                 <label className="block text-sm font-medium">
-                  Nombre
+                  {t("Nombre")}
                   <input
                     value={name}
                     onChange={(event) => setName(event.target.value)}
@@ -101,7 +103,7 @@ const Login = () => {
               )}
 
               <label className="block text-sm font-medium">
-                Correo
+                {t("Correo")}
                 <input
                   type="email"
                   value={email}
@@ -112,7 +114,7 @@ const Login = () => {
               </label>
 
               <label className="block text-sm font-medium">
-                Contrasena
+                {t("Contrasena")}
                 <input
                   type="password"
                   value={password}
@@ -129,7 +131,7 @@ const Login = () => {
                 disabled={loading}
                 className="w-full rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
               >
-                {mode === "login" ? "Entrar" : "Crear cuenta"}
+                {mode === "login" ? t("Entrar") : t("Crear cuenta")}
               </button>
             </form>
           </section>
