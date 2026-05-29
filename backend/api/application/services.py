@@ -1,8 +1,12 @@
 
 from datetime import timedelta
+import logging
+import socket
+from urllib.parse import urlparse
 
 import requests
 from django.conf import settings
+from django.db import transaction
 from django.utils.translation import gettext as _
 
 from api.domain.Builder import OrderBuilder
@@ -14,12 +18,33 @@ from api.models import (
     Cart, CartItem, Order, Category
 )
 
+logger = logging.getLogger(__name__)
+
+
+def queue_optional_task(task, *args) -> bool:
+    try:
+        if getattr(settings, "CELERY_TASK_ALWAYS_EAGER", False):
+            result = task.apply(args=args)
+            return not result.failed()
+        broker_url = getattr(settings, "CELERY_BROKER_URL", "")
+        parsed_broker = urlparse(broker_url)
+        if parsed_broker.hostname and parsed_broker.scheme.startswith("redis"):
+            port = parsed_broker.port or 6379
+            with socket.create_connection((parsed_broker.hostname, port), timeout=0.5):
+                pass
+        task.delay(*args)
+        return True
+    except Exception as exc:
+        logger.warning("Could not queue task %s: %s", task.name, exc)
+        return False
+
+
 # UserService
 class UserService:
 
     def register(self, data: dict):
         if User.objects.filter(email=data["email"]).exists():
-            raise ValueError("A user with that email already exists.")
+            raise ValueError(_("A user with that email already exists."))
         user = User.objects.create(
             name=data["name"],
             email=data["email"],
@@ -46,7 +71,7 @@ class UserService:
         try:
             profile = UserProfile.objects.get(user_id=user_id)
         except UserProfile.DoesNotExist:
-            raise ValueError("Profile not found.")
+            raise ValueError(_("Profile not found."))
         profile.budget = data.get("budget", profile.budget)
         profile.usage_type = data.get("usage_type", profile.usage_type)
         profile.preferred_brands = data.get("preferred_brands", profile.preferred_brands)
@@ -67,7 +92,7 @@ class ProductService:
         try:
             return Product.objects.select_related("stock", "category").get(id=product_id)
         except Product.DoesNotExist:
-            raise ValueError("Product not found.")
+            raise ValueError(_("Product not found."))
 
 
 # StockService
@@ -80,13 +105,13 @@ class StockService:
         try:
             stock = Stock.objects.get(product_id=product_id)
         except Stock.DoesNotExist:
-            raise ValueError("No stock record found for that product.")
+            raise ValueError(_("No stock record found for that product."))
         return stock.available_quantity >= quantity
 
     def reserve(self, product_id: str, quantity: int):
         stock = Stock.objects.select_for_update().get(product_id=product_id)
         if stock.available_quantity < quantity:
-            raise ValueError(f"Insufficient stock for product {product_id}.")
+            raise ValueError(_("Insufficient stock for product %(product_id)s.") % {"product_id": product_id})
         stock.available_quantity -= quantity
         stock.reserved_quantity += quantity
         stock.save()
@@ -105,7 +130,7 @@ class StockService:
             product = stock.product
             from api.tasks import send_low_stock_notification_task
 
-            send_low_stock_notification_task.delay(product.id)
+            queue_optional_task(send_low_stock_notification_task, product.id)
 
 
 # CartService
@@ -116,7 +141,7 @@ class CartService:
 
     def add_product(self, user_id: str, product_id: str, quantity: int):
         if not self.stock_service.check_availability(product_id, quantity):
-            raise ValueError("Not enough stock to add to cart.")
+            raise ValueError(_("Not enough stock to add to cart."))
         cart = Cart.objects.get(user_id=user_id)
         item, created = CartItem.objects.get_or_create(
             cart=cart,
@@ -171,21 +196,34 @@ class OrderService:
         """
         user_id = data["user_id"]
         address = data["shipping_address"]
+        incoming_items = data.get("items") or []
 
         # 1. Get cart
         try:
             cart = Cart.objects.prefetch_related("items__product").get(user_id=user_id)
         except Cart.DoesNotExist:
-            raise ValueError("The user does not have an active cart.")
+            raise ValueError(_("The user does not have an active cart."))
+
+        if incoming_items:
+            with transaction.atomic():
+                cart.items.all().delete()
+                for item in incoming_items:
+                    product_id = item["product_id"]
+                    quantity = item["quantity"]
+                    if not self.stock_service.check_availability(product_id, quantity):
+                        product = Product.objects.get(id=product_id)
+                        raise ValueError(_("Insufficient stock for: %(product_name)s") % {"product_name": product.name})
+                    CartItem.objects.create(cart=cart, product_id=product_id, quantity=quantity)
+            cart = Cart.objects.prefetch_related("items__product").get(user_id=user_id)
 
         items = list(cart.items.all())
         if not items:
-            raise ValueError("The cart is empty.")
+            raise ValueError(_("The cart is empty."))
 
         # 2. Validate stock before reserving
         for item in items:
             if not self.stock_service.check_availability(item.product_id, item.quantity):
-                raise ValueError(f"Insufficient stock for: {item.product.name}")
+                raise ValueError(_("Insufficient stock for: %(product_name)s") % {"product_name": item.product.name})
 
         # 3. Reserve stock
         for item in items:
@@ -216,8 +254,13 @@ class OrderService:
         # 6. Notify customer asynchronously through Celery/Redis.
         from api.tasks import send_order_confirmation_task
 
-        send_order_confirmation_task.delay(order.id)
-        order.email_sent = False
+        order.email_sent = queue_optional_task(send_order_confirmation_task, order.id)
+        if not order.email_sent:
+            try:
+                order.email_sent = self.notifier.send_confirmation(order)
+            except Exception as exc:
+                logger.warning("Could not send order confirmation email directly: %s", exc)
+                order.email_sent = False
 
         return order
 
@@ -237,7 +280,7 @@ class RecommendationService:
         try:
             profile = UserProfile.objects.get(user_id=user_id)
         except UserProfile.DoesNotExist:
-            raise ValueError("User profile not found.")
+            raise ValueError(_("User profile not found."))
 
         criterion = profile.usage_type or "general"
         brands = profile.preferred_brands or ""
