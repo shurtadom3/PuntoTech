@@ -1,54 +1,109 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "/api").replace(/\/$/, "");
+
+export interface ApiProduct {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  price: string | number;
+  description?: string;
+  available_stock: number | null;
+}
+
+export interface AlliedCatalog {
+  items?: ApiProduct[];
+  message?: string;
+  source?: string;
+  service?: string;
+}
+
+export interface ExchangeRate {
+  provider?: string;
+  from: string;
+  to: string;
+  rate: string | number;
+  date?: string;
+}
+
+const requestJson = async <T = unknown>(url: string, options?: RequestInit): Promise<T> => {
+  const response = await fetch(`${BASE_URL}${url}`, {
+    headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
+    ...options,
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw data;
+  }
+
+  return data as T;
+};
 
 // Usuarios
 export const registrarUsuario = (datos: object) =>
-  fetch(`${BASE_URL}/usuarios/registro/`, {
+  requestJson("/usuarios/registro/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datos),
-  }).then(res => res.json());
+  });
 
 export const iniciarSesion = (datos: object) =>
-  fetch(`${BASE_URL}/usuarios/login/`, {
+  requestJson("/usuarios/login/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datos),
-  }).then(res => res.json());
+  });
 
 // Productos
 export const listarProductos = () =>
-  fetch(`${BASE_URL}/productos/`).then(res => res.json());
+  requestJson<ApiProduct[]>("/productos/");
 
 export const listarProductosPorCategoria = (categoriaId: string) =>
-  fetch(`${BASE_URL}/productos/categoria/${categoriaId}/`).then(res => res.json());
+  requestJson(`/productos/categoria/${categoriaId}/`);
 
 export const detalleProducto = (productoId: string) =>
-  fetch(`${BASE_URL}/productos/${productoId}/`).then(res => res.json());
+  requestJson(`/productos/${productoId}/`);
 
 // Carrito
 export const verCarrito = (usuarioId: string) =>
-  fetch(`${BASE_URL}/carrito/${usuarioId}/`).then(res => res.json());
+  requestJson(`/carrito/${usuarioId}/`);
 
 export const agregarAlCarrito = (usuarioId: string, productoId: string, cantidad: number) =>
-  fetch(`${BASE_URL}/carrito/${usuarioId}/agregar/`, {
+  requestJson(`/carrito/${usuarioId}/agregar/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ product_id: productoId, quantity: cantidad }),
-  }).then(res => res.json());
+  });
 
 export const eliminarDelCarrito = (usuarioId: string, productoId: string) =>
-  fetch(`${BASE_URL}/carrito/${usuarioId}/eliminar/${productoId}/`, {
+  requestJson(`/carrito/${usuarioId}/eliminar/${productoId}/`, {
     method: "DELETE",
-  }).then(res => res.json());
+  });
 
 // Pedidos
 export const crearPedido = (usuarioId: string, shipping_address: string) =>
-  fetch(`${BASE_URL}/pedidos/crear/`, {
+  requestJson("/pedidos/crear/", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ user_id: usuarioId, shipping_address }),
-  }).then(res => res.json());
+  });
+
+export const crearPedidoDesdeItems = (
+  usuarioId: string,
+  shipping_address: string,
+  items: { product_id: string; quantity: number }[]
+) =>
+  requestJson("/pedidos/crear/", {
+    method: "POST",
+    body: JSON.stringify({ user_id: usuarioId, shipping_address, items }),
+  });
 
 // Recomendaciones
 export const obtenerRecomendaciones = (usuarioId: string) =>
-  fetch(`${BASE_URL}/recomendaciones/${usuarioId}/`).then(res => res.json());
+  requestJson(`/recomendaciones/${usuarioId}/`);
+
+// Integraciones
+export const obtenerCatalogoPublico = () =>
+  requestJson<AlliedCatalog>("/integracion/catalogo/");
+
+export const obtenerCatalogoAliado = () =>
+  requestJson<AlliedCatalog>("/integracion/aliado/catalogo/");
+
+export const obtenerTasaCambio = (from = "USD", to = "COP") =>
+  requestJson<ExchangeRate>(`/integracion/tasa-cambio/?from=${from}&to=${to}`);

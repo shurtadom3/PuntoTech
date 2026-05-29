@@ -1,5 +1,6 @@
 
 from decimal import Decimal
+from django.utils.translation import gettext as _
 
 class OrderBuilder:
 
@@ -11,25 +12,25 @@ class OrderBuilder:
 
     def for_user(self, user_id: str) -> "OrderBuilder":
         if not user_id:
-            raise ValueError("The order must have an associated user.")
+            raise ValueError(_("The order must have an associated user."))
         self._user_id = user_id
         return self
 
     def with_products(self, products: list) -> "OrderBuilder":
         if not products:
-            raise ValueError("The order must contain at least one product.")
+            raise ValueError(_("The order must contain at least one product."))
         self._products = products
         return self
 
     def with_address(self, address: str) -> "OrderBuilder":
         if not address or len(address.strip()) < 5:
-            raise ValueError("The shipping address is not valid.")
+            raise ValueError(_("The shipping address is not valid."))
         self._address = address.strip()
         return self
 
     def calculate_total(self) -> "OrderBuilder":
         if not self._products:
-            raise ValueError("No products to calculate the total.")
+            raise ValueError(_("No products to calculate the total."))
         self._total = sum(
             p["product"].price * p["quantity"]
             for p in self._products
@@ -38,11 +39,11 @@ class OrderBuilder:
 
     def build(self):
         if self._total <= 0:
-            raise ValueError("The order total must be greater than zero.")
+            raise ValueError(_("The order total must be greater than zero."))
         if not self._user_id:
-            raise ValueError("The order has no user.")
+            raise ValueError(_("The order has no user."))
         if not self._address:
-            raise ValueError("The order has no shipping address.")
+            raise ValueError(_("The order has no shipping address."))
 
         from api.models import Order, OrderDetail
 

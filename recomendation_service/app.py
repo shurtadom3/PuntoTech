@@ -1,66 +1,39 @@
-"""
-recomendaciones-service/app.py
-------------------------------
-Microservicio Flask — Strangler Pattern
-Extrae la lógica de RecomendacionService del monolito Django.
-Recibe parámetros vía JSON y responde recomendaciones filtradas.
-"""
+from flask import Flask, jsonify, request
 
-from flask import Flask, request, jsonify
+from recommendation_engine import normalize_brands, normalize_budget, recommend_products
+
 
 app = Flask(__name__)
 
 
-def _filtrar_productos(productos: list, marcas: list, presupuesto: float | None) -> list:
-    resultado = []
-    for p in productos:
-        if marcas and p.get("marca") not in marcas:
-            continue
-        if presupuesto and p.get("precio", 0) > presupuesto:
-            continue
-        resultado.append(p)
-    return resultado[:5]
-
-
 @app.route("/api/v2/recomendaciones/<usuario_id>", methods=["POST"])
 def generar_recomendacion(usuario_id):
-    """
-    Body esperado:
-    {
-        "tipo_uso": "gaming",
-        "marcas_preferidas": "Samsung,Sony",
-        "presupuesto": 5000000,
-        "productos": [...]   <- lista enviada por Django (proxy)
-    }
-    """
     if not request.is_json:
         return jsonify({"error": "Content-Type debe ser application/json"}), 400
 
     data = request.get_json()
+    products = data.get("productos")
 
-    productos = data.get("productos")
-    if not isinstance(productos, list):
+    if not isinstance(products, list):
         return jsonify({"error": "El campo 'productos' es obligatorio y debe ser una lista."}), 400
 
-    marcas_raw = data.get("marcas_preferidas", "")
-    marcas = [m.strip() for m in marcas_raw.split(",") if m.strip()] if marcas_raw else []
-
-    presupuesto_raw = data.get("presupuesto")
     try:
-        presupuesto = float(presupuesto_raw) if presupuesto_raw is not None else None
-    except (ValueError, TypeError):
-        return jsonify({"error": "El campo 'presupuesto' debe ser un número."}), 400
+        budget = normalize_budget(data.get("presupuesto"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "El campo 'presupuesto' debe ser un numero."}), 400
 
-    tipo_uso = data.get("tipo_uso", "general")
+    usage_type = data.get("tipo_uso", "general")
+    brands = normalize_brands(data.get("marcas_preferidas"))
+    recommendations = recommend_products(products, brands, budget)
 
-    recomendados = _filtrar_productos(productos, marcas, presupuesto)
-
-    return jsonify({
-        "usuario_id": usuario_id,
-        "criterio": tipo_uso,
-        "recomendaciones": recomendados,
-        "total": len(recomendados),
-    }), 200
+    return jsonify(
+        {
+            "usuario_id": usuario_id,
+            "criterio": usage_type,
+            "recomendaciones": recommendations,
+            "total": len(recommendations),
+        }
+    ), 200
 
 
 @app.route("/health", methods=["GET"])
@@ -69,13 +42,13 @@ def health():
 
 
 @app.errorhandler(404)
-def not_found(e):
+def not_found(_error):
     return jsonify({"error": "Ruta no encontrada."}), 404
 
 
 @app.errorhandler(500)
-def server_error(e):
-    return jsonify({"error": "Error interno del servidor.", "detalle": str(e)}), 500
+def server_error(error):
+    return jsonify({"error": "Error interno del servidor.", "detalle": str(error)}), 500
 
 
 if __name__ == "__main__":

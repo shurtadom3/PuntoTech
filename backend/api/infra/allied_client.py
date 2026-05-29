@@ -1,5 +1,6 @@
 import requests
 from django.conf import settings
+from django.utils.translation import gettext as _
 
 
 class AlliedCatalogClient:
@@ -13,7 +14,7 @@ class AlliedCatalogClient:
         if not self.base_url:
             return {
                 "source": "demo",
-                "message": "Configure ALLIED_SERVICE_URL with the allied team's endpoint.",
+                "message": _("Configure ALLIED_SERVICE_URL with the allied team's endpoint."),
                 "items": [],
             }
         response = requests.get(f"{self.base_url}/api/integracion/catalogo/", timeout=self.timeout)

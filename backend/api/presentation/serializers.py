@@ -31,6 +31,7 @@ class AddCartItemSerializer(serializers.Serializer):
 class CreateOrderSerializer(serializers.Serializer):
     user_id = serializers.CharField()
     shipping_address = serializers.CharField(min_length=5)
+    items = AddCartItemSerializer(many=True, required=False)
 
 
 class ProductSerializer(serializers.ModelSerializer):
