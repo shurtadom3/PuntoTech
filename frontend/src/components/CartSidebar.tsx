@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Minus, Plus, Trash2, X, ShoppingBag } from "lucide-react";
 import { crearPedidoDesdeItems } from "../api";
 import { useCart } from "../context/CartContext";
+import { useGettext } from "../i18n/gettext";
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("es-CO", {
@@ -12,8 +13,8 @@ const formatPrice = (price: number) =>
     maximumFractionDigits: 0,
   }).format(price);
 
-const formatDate = (date: string) =>
-  new Intl.DateTimeFormat("es-CO", {
+const formatDate = (date: string, language: string) =>
+  new Intl.DateTimeFormat(language === "en" ? "en-US" : "es-CO", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -29,6 +30,7 @@ interface CartSidebarProps {
 }
 
 const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
+  const { gettext: t, language } = useGettext();
   const { closeCart, clearCart, isCartOpen, items, removeItem, total, updateQuantity } = useCart();
   const [address, setAddress] = useState("");
   const [message, setMessage] = useState("");
@@ -45,7 +47,7 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
       return;
     }
     if (address.trim().length < 5) {
-      setMessage("Escribe una direccion de envio valida.");
+      setMessage(t("Escribe una direccion de envio valida."));
       return;
     }
 
@@ -64,19 +66,19 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
       clearCart();
       setAddress("");
       const estimatedDate = order.estimated_delivery_date
-        ? ` Fecha estimada de llegada: ${formatDate(order.estimated_delivery_date)}.`
+        ? ` ${t("Fecha estimada de llegada: {date}.", { date: formatDate(order.estimated_delivery_date, language) })}`
         : "";
       const emailMessage = order.email_sent
-        ? "El correo de confirmacion fue enviado."
-        : "Revisa la configuracion SMTP para que el correo salga de verdad.";
+        ? t("El correo de confirmacion fue enviado.")
+        : t("Revisa la configuracion SMTP para que el correo salga de verdad.");
       onCheckoutSuccess?.(
         order.message
-          ? `${order.message} Pedido ${order.id}.${estimatedDate} ${emailMessage}`
-          : `Compra confirmada. El producto se compro correctamente. Pedido ${order.id}.${estimatedDate} ${emailMessage}`
+          ? `${order.message} ${t("Pedido {id}.", { id: order.id })}${estimatedDate} ${emailMessage}`
+          : `${t("Compra confirmada. El producto se compro correctamente. Pedido {id}.", { id: order.id })}${estimatedDate} ${emailMessage}`
       );
       closeCart();
     } catch {
-      setMessage("No se pudo completar la compra. Revisa que el backend este activo.");
+      setMessage(t("No se pudo completar la compra. Revisa que el backend este activo."));
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
         <>
           <motion.button
             type="button"
-            aria-label="Cerrar carrito"
+            aria-label={t("Cerrar carrito")}
             className="fixed inset-0 z-[70] bg-slate-900/35"
             style={{ zIndex: 9990 }}
             initial={{ opacity: 0 }}
@@ -107,8 +109,8 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
           >
             <header className="flex items-center justify-between border-b border-border px-5 py-4">
               <div>
-                <p className="text-sm font-semibold text-primary">Tu compra</p>
-                <h2 className="font-heading text-2xl font-bold">Carrito</h2>
+                <p className="text-sm font-semibold text-primary">{t("Tu compra")}</p>
+                <h2 className="font-heading text-2xl font-bold">{t("Carrito")}</h2>
               </div>
               <button type="button" onClick={closeCart} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
                 <X size={22} />
@@ -118,14 +120,14 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
             {items.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
                 <ShoppingBag size={44} className="text-primary" />
-                <h3 className="mt-4 font-heading text-xl font-bold">Tu carrito esta vacio</h3>
-                <p className="mt-2 text-sm text-muted-foreground">Agrega productos para verlos aqui.</p>
+                <h3 className="mt-4 font-heading text-xl font-bold">{t("Tu carrito esta vacio")}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{t("Agrega productos para verlos aqui.")}</p>
                 <Link
                   to="/products"
                   onClick={closeCart}
                   className="mt-6 rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground"
                 >
-                  Ver productos
+                  {t("Ver productos")}
                 </Link>
               </div>
             ) : (
@@ -158,25 +160,25 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
 
                 <footer className="border-t border-border px-5 py-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Total</span>
+                    <span className="text-muted-foreground">{t("Total")}</span>
                     <strong className="font-heading text-xl">{formatPrice(total)}</strong>
                   </div>
 
                   {user && (
                     <label className="mt-4 block text-sm font-medium">
-                      Direccion de envio
+                      {t("Direccion de envio")}
                       <textarea
                         value={address}
                         onChange={(event) => setAddress(event.target.value)}
                         className="mt-2 min-h-20 w-full rounded-lg border border-border bg-card p-3 text-foreground outline-none focus:border-primary"
-                        placeholder="Calle, ciudad, referencias"
+                        placeholder={t("Calle, ciudad, referencias")}
                       />
                     </label>
                   )}
 
                   {!user && (
                     <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-                      El inicio de sesion solo se pedira al comprar.
+                      {t("El inicio de sesion solo se pedira al comprar.")}
                     </p>
                   )}
 
@@ -188,7 +190,7 @@ const CartSidebar = ({ onCheckoutSuccess }: CartSidebarProps) => {
                     disabled={loading}
                     className="mt-4 w-full rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                   >
-                    {user ? "Comprar ahora" : "Iniciar sesion para comprar"}
+                    {user ? t("Comprar ahora") : t("Iniciar sesion para comprar")}
                   </button>
                 </footer>
               </>

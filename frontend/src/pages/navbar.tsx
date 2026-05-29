@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Menu, X, Search, User } from "lucide-react";
+import { Globe2, ShoppingCart, Menu, X, Search, User } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useGettext } from "../i18n/gettext";
 
 interface StoredUser {
   id: string;
@@ -27,6 +28,7 @@ const notifyAuth = (message: string) => {
 };
 
 const Navbar = () => {
+  const { gettext: t, language, toggleLanguage } = useGettext();
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,7 +63,7 @@ const Navbar = () => {
     setUser(null);
     setIsOpen(false);
     window.dispatchEvent(new Event("puntotech_user_changed"));
-    notifyAuth(`Cierre de sesion confirmado. Hasta pronto, ${displayName}.`);
+    notifyAuth(t("Cierre de sesion confirmado. Hasta pronto, {name}.", { name: displayName }));
     navigate("/");
   };
 
@@ -102,7 +104,7 @@ const Navbar = () => {
                 to={link.to}
                 className="text-sm text-muted-foreground hover:text-primary transition-colors duration-200"
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ))}
           </div>
@@ -115,7 +117,7 @@ const Navbar = () => {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   autoFocus
-                  placeholder="Buscar producto"
+                  placeholder={t("Buscar producto")}
                   className="h-10 w-44 bg-transparent text-sm outline-none"
                 />
                 <button type="submit" className="text-muted-foreground hover:text-primary">
@@ -130,20 +132,30 @@ const Navbar = () => {
                 <Search size={20} />
               </button>
             )}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              title={t("Cambiar idioma")}
+              aria-label={t("Cambiar idioma")}
+            >
+              <Globe2 size={17} />
+              {language.toUpperCase()}
+            </button>
             {user ? (
               <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-semibold text-primary">
                 <User size={16} />
-                <span>Hola, {user.name || user.email.split("@")[0]}</span>
+                <span>{t("Hola, {name}", { name: user.name || user.email.split("@")[0] })}</span>
                 <button type="button" onClick={handleLogout} className="text-xs text-muted-foreground hover:text-primary">
-                  Salir
+                  {t("Salir")}
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors" title="Iniciar sesion">
+              <Link to="/login" className="text-muted-foreground hover:text-primary transition-colors" title={t("Iniciar sesion")}>
                 <User size={20} />
               </Link>
             )}
-            <button type="button" onClick={handleOpenCart} className="relative text-muted-foreground hover:text-primary transition-colors" title="Carrito">
+            <button type="button" onClick={handleOpenCart} className="relative text-muted-foreground hover:text-primary transition-colors" title={t("Carrito")}>
               <ShoppingCart size={20} />
               {count > 0 && (
                 <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
@@ -154,7 +166,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-3 md:hidden">
-            <button type="button" onClick={handleOpenCart} className="relative text-muted-foreground" title="Carrito">
+            <button type="button" onClick={handleOpenCart} className="relative text-muted-foreground" title={t("Carrito")}>
               <ShoppingCart size={22} />
               {count > 0 && (
                 <span className="absolute -top-2 -right-2 min-w-4 h-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center font-bold">
@@ -185,15 +197,24 @@ const Navbar = () => {
                   className="text-muted-foreground hover:text-primary transition-colors py-2"
                   onClick={() => setIsOpen(false)}
                 >
-                  {link.label}
+                  {t(link.label)}
                 </Link>
               ))}
+              <button
+                type="button"
+                onClick={toggleLanguage}
+                className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground"
+                aria-label={t("Cambiar idioma")}
+              >
+                <Globe2 size={18} />
+                {t("Cambiar idioma")} ({language.toUpperCase()})
+              </button>
               <form onSubmit={handleSearch} className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1">
                 <Search size={18} className="text-muted-foreground" />
                 <input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Buscar producto"
+                  placeholder={t("Buscar producto")}
                   className="h-10 w-full bg-transparent text-sm outline-none"
                 />
                 <button type="submit" className="text-muted-foreground hover:text-primary">
@@ -204,9 +225,9 @@ const Navbar = () => {
                 {user ? (
                   <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                     <User size={20} />
-                    <span>Hola, {user.name || user.email.split("@")[0]}</span>
+                    <span>{t("Hola, {name}", { name: user.name || user.email.split("@")[0] })}</span>
                     <button type="button" onClick={handleLogout} className="text-xs text-muted-foreground">
-                      Salir
+                      {t("Salir")}
                     </button>
                   </div>
                 ) : (

@@ -7,8 +7,10 @@ import Combos from "./pages/combo";
 import Login from "./pages/login";
 import Guarantees from "./pages/guarantees";
 import CartSidebar from "./components/CartSidebar";
+import { useGettext } from "./i18n/gettext";
 
 export default function App() {
+  const { gettext: t } = useGettext();
   const [purchaseMessage, setPurchaseMessage] = useState("");
   const [authMessage, setAuthMessage] = useState("");
 
@@ -50,7 +52,7 @@ export default function App() {
             <p className="text-sm font-medium">{authMessage}</p>
             <button
               type="button"
-              aria-label="Cerrar mensaje"
+              aria-label={t("Cerrar mensaje")}
               onClick={() => setAuthMessage("")}
               className="ml-auto rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-primary"
             >
@@ -66,7 +68,7 @@ export default function App() {
             <p className="text-sm font-medium">{purchaseMessage}</p>
             <button
               type="button"
-              aria-label="Cerrar mensaje"
+              aria-label={t("Cerrar mensaje")}
               onClick={() => setPurchaseMessage("")}
               className="ml-auto rounded-lg p-1 text-emerald-700 hover:bg-emerald-50"
             >

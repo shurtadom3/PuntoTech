@@ -4,11 +4,14 @@ import './index.css'
 import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { CartProvider } from './context/CartContext'
+import { LanguageProvider } from './i18n/gettext'
 
 createRoot(document.getElementById('root')).render(
   <BrowserRouter>
-    <CartProvider>
-      <App />
-    </CartProvider>
+    <LanguageProvider>
+      <CartProvider>
+        <App />
+      </CartProvider>
+    </LanguageProvider>
   </BrowserRouter>
 )

@@ -4,6 +4,7 @@ import { Check, Package, Percent, ShoppingCart } from "lucide-react";
 import Navbar from "./navbar";
 import { listarProductos } from "../api";
 import { useCart, type CartProduct } from "../context/CartContext";
+import { useGettext } from "../i18n/gettext";
 import { getImagesForCombo, getProductImage } from "../utils/productImages";
 
 interface ApiProduct {
@@ -34,12 +35,13 @@ const normalizeCombo = (product: ApiProduct): CartProduct & { description: strin
   description: product.description,
 });
 
-const discountFromDescription = (description: string) => {
+const discountFromDescription = (description: string, comboLabel: string) => {
   const match = description.match(/(\d+)%/);
-  return match ? `${match[1]}% OFF` : "Combo";
+  return match ? `${match[1]}% OFF` : comboLabel;
 };
 
 const Combos = () => {
+  const { gettext: t } = useGettext();
   const { addItem, openCart } = useCart();
   const [combos, setCombos] = useState<Array<CartProduct & { description: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -55,15 +57,15 @@ const Combos = () => {
           setLoadError("");
         } else {
           setCombos([]);
-          setLoadError("No se pudieron leer los combos de la base de datos.");
+          setLoadError(t("No se pudieron leer los combos de la base de datos."));
         }
       })
       .catch(() => {
         setCombos([]);
-        setLoadError("No se pudo conectar con la base de datos. Revisa que el backend este activo.");
+        setLoadError(t("No se pudo conectar con la base de datos. Revisa que el backend este activo."));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   const handleAddCombo = (combo: CartProduct) => {
     addItem(combo);
@@ -85,17 +87,15 @@ const Combos = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-primary/30 bg-primary/5 mb-4">
               <Package size={14} className="text-primary" />
-              <span className="text-sm text-primary font-medium">Ahorra más con combos</span>
+              <span className="text-sm text-primary font-medium">{t("Ahorra mas con combos")}</span>
             </div>
             <h2 className="font-heading text-3xl md:text-5xl font-bold mb-4">
-              Combos <span className="gradient-text">tecnológicos</span>
+              {t("Combos")} <span className="gradient-text">{t("tecnologicos")}</span>
             </h2>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              Paquetes disponibles.
-            </p>
+            <p className="text-muted-foreground max-w-md mx-auto">{t("Paquetes disponibles.")}</p>
           </motion.div>
 
-          {loading && <p className="text-center text-muted-foreground">Cargando combos...</p>}
+          {loading && <p className="text-center text-muted-foreground">{t("Cargando combos...")}</p>}
           {!loading && loadError && <p className="text-center text-red-600">{loadError}</p>}
 
           {!loading && !loadError && (
@@ -116,7 +116,7 @@ const Combos = () => {
                   >
                     <div className="absolute top-4 right-4 flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold">
                       <Percent size={14} />
-                      {discountFromDescription(combo.description)}
+                      {discountFromDescription(combo.description, t("Combo"))}
                     </div>
 
                     <div className="flex gap-2 mb-6">
@@ -134,7 +134,7 @@ const Combos = () => {
                       <span className="block font-heading text-2xl font-bold text-primary">
                         {formatPrice(combo.price)}
                       </span>
-                      <span className="text-xs text-muted-foreground">Stock: {combo.available_stock}</span>
+                      <span className="text-xs text-muted-foreground">{t("Stock")}: {combo.available_stock}</span>
                     </div>
 
                     <button
@@ -143,7 +143,7 @@ const Combos = () => {
                       onClick={() => handleAddCombo(combo)}
                       className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-primary/30 text-primary font-semibold hover:bg-primary hover:text-primary-foreground transition-colors disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent"
                     >
-                      {justAdded ? "Agregado" : "Agregar combo"}
+                      {justAdded ? t("Agregado") : t("Agregar combo")}
                       {justAdded ? <Check size={16} /> : <ShoppingCart size={16} />}
                     </button>
                   </motion.div>
@@ -153,7 +153,7 @@ const Combos = () => {
           )}
 
           {!loading && !loadError && combos.length === 0 && (
-            <p className="text-center text-muted-foreground">No hay combos disponibles.</p>
+            <p className="text-center text-muted-foreground">{t("No hay combos disponibles.")}</p>
           )}
         </div>
       </section>
