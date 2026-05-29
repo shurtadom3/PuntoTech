@@ -1,0 +1,23 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: PuntoTech\n"
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "Django connected"
+msgstr "Django connected"
+
+msgid "Profile updated"
+msgstr "Profile updated"
+
+msgid "Product added to cart."
+msgstr "Product added to cart."
+
+msgid "Product removed from cart."
+msgstr "Product removed from cart."
+
+msgid "Purchase confirmed. We are preparing your order and will email the estimated arrival date."
+msgstr "Purchase confirmed. We are preparing your order and will email the estimated arrival date."
+
+msgid "Incorrect email or password."
+msgstr "Incorrect email or password."

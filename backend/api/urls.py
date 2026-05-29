@@ -6,6 +6,7 @@ from api.presentation.views import (
     AddCartItemView, ViewCartView, RemoveCartItemView,
     CreateOrderView, ListOrdersView,
     RecommendationsView,
+    PublicCatalogIntegrationView, AlliedCatalogIntegrationView, ExchangeRateView,
 )
 
 urlpatterns = [
@@ -33,4 +34,9 @@ urlpatterns = [
 
     # Recomendaciones
     path("recomendaciones/<str:user_id>/", RecommendationsView.as_view()),
+
+    # Integraciones JSON
+    path("integracion/catalogo/", PublicCatalogIntegrationView.as_view()),
+    path("integracion/aliado/catalogo/", AlliedCatalogIntegrationView.as_view()),
+    path("integracion/tasa-cambio/", ExchangeRateView.as_view()),
 ]

@@ -1,8 +1,14 @@
 
 from datetime import timedelta
 
+import requests
+from django.conf import settings
+from django.utils.translation import gettext as _
+
 from api.domain.Builder import OrderBuilder
 from api.infra.Factory import NotifierFactory
+from api.infra.adapters import ExchangeRateAdapter
+from api.infra.allied_client import AlliedCatalogClient
 from api.models import (
     User, UserProfile, Product, Stock,
     Cart, CartItem, Order, Category
@@ -32,7 +38,7 @@ class UserService:
         try:
             user = User.objects.get(email=email, password=password)
         except User.DoesNotExist:
-            raise ValueError("Correo o contrasena incorrectos.")
+            raise ValueError(_("Incorrect email or password."))
         Cart.objects.get_or_create(user=user)
         return user
 
@@ -97,7 +103,9 @@ class StockService:
         stock.save()
         if stock.available_quantity <= stock.reorder_point:
             product = stock.product
-            self.notifier.send_low_stock_notification(product)
+            from api.tasks import send_low_stock_notification_task
+
+            send_low_stock_notification_task.delay(product.id)
 
 
 # CartService
@@ -205,9 +213,11 @@ class OrderService:
             self.stock_service.confirm_deduction(item.product_id, item.quantity)
         cart.items.all().delete()
 
-        # 6. Notify customer
-        email_sent = self.notifier.send_confirmation(order)
-        order.email_sent = email_sent
+        # 6. Notify customer asynchronously through Celery/Redis.
+        from api.tasks import send_order_confirmation_task
+
+        send_order_confirmation_task.delay(order.id)
+        order.email_sent = False
 
         return order
 
@@ -240,7 +250,54 @@ class RecommendationService:
         if budget:
             products_qs = products_qs.filter(price__lte=budget)
 
-        recommended = list(products_qs[:5].values("id", "name", "brand", "price"))
+        products = [
+            {
+                "id": product.id,
+                "nombre": product.name,
+                "marca": product.brand,
+                "precio": float(product.price),
+            }
+            for product in products_qs
+        ]
+
+        response = requests.post(
+            f"{settings.RECOMMENDATION_SERVICE_URL}/api/v2/recomendaciones/{user_id}",
+            json={
+                "tipo_uso": criterion,
+                "marcas_preferidas": brands,
+                "presupuesto": budget,
+                "productos": products,
+            },
+            timeout=5,
+        )
+        response.raise_for_status()
+        recommended = response.json().get("recomendaciones", [])
 
         profile.add_recommendation(type=criterion, criterion=f"budget={budget}, brands={brands}")
         return recommended
+
+
+class IntegrationService:
+    def public_catalog(self):
+        products = Product.objects.select_related("category", "stock").all().order_by("name")
+        return {
+            "service": "puntotech-catalog",
+            "version": "1.0",
+            "items": [
+                {
+                    "id": product.id,
+                    "name": product.name,
+                    "brand": product.brand,
+                    "price": float(product.price),
+                    "category": product.category.name if product.category else None,
+                    "available_stock": getattr(product.stock, "available_quantity", None),
+                }
+                for product in products
+            ],
+        }
+
+    def allied_catalog(self):
+        return AlliedCatalogClient().get_catalog()
+
+    def exchange_rate(self, from_currency="USD", to_currency="COP"):
+        return ExchangeRateAdapter().get_rate(from_currency, to_currency)

@@ -1,11 +1,13 @@
 
 from django.http import JsonResponse
+from django.utils.translation import gettext as _
+from requests import RequestException
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from api.application.services import (
     UserService, ProductService,
-    CartService, OrderService, RecommendationService
+    CartService, OrderService, RecommendationService, IntegrationService
 )
 from api.presentation.serializers import (
     UserLoginSerializer, UserRegistrationSerializer, UpdateProfileSerializer,
@@ -14,7 +16,7 @@ from api.presentation.serializers import (
 )
 
 def health(request):
-    return JsonResponse({"status": "ok", "message": "Django connected"})
+    return JsonResponse({"status": "ok", "message": _("Django connected")})
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
@@ -50,7 +52,7 @@ class UpdateProfileView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
             profile = UserService().update_profile(usuario_id, serializer.validated_data)
-            return Response({"message": "Profile updated", "usage_type": profile.usage_type}, status=status.HTTP_200_OK)
+            return Response({"message": _("Profile updated"), "usage_type": profile.usage_type}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
 
@@ -89,7 +91,7 @@ class AddCartItemView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
             CartService().add_product(user_id, **serializer.validated_data)
-            return Response({"message": "Product added to cart."}, status=status.HTTP_200_OK)
+            return Response({"message": _("Product added to cart.")}, status=status.HTTP_200_OK)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_409_CONFLICT)
 
@@ -106,7 +108,7 @@ class ViewCartView(APIView):
 class RemoveCartItemView(APIView):
     def delete(self, request, user_id, product_id):
         CartService().remove_product(user_id, product_id)
-        return Response({"message": "Product removed from cart."}, status=status.HTTP_200_OK)
+        return Response({"message": _("Product removed from cart.")}, status=status.HTTP_200_OK)
 
 
 # ── Orders ────────────────────────────────────────────────────────────────────
@@ -127,7 +129,7 @@ class CreateOrderView(APIView):
                     "status": order.status,
                     "estimated_delivery_date": estimated_delivery_date.isoformat(),
                     "email_sent": bool(getattr(order, "email_sent", False)),
-                    "message": "Compra confirmada. El producto se compro correctamente y te enviamos un correo con la fecha estimada de llegada.",
+                    "message": _("Purchase confirmed. We are preparing your order and will email the estimated arrival date."),
                 },
                 status=status.HTTP_201_CREATED,
             )
@@ -151,5 +153,31 @@ class RecommendationsView(APIView):
         try:
             recommended = RecommendationService().generate_recommendation(user_id)
             return Response({"recommendations": recommended}, status=status.HTTP_200_OK)
+        except RequestException as e:
+            return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
+
+class PublicCatalogIntegrationView(APIView):
+    def get(self, request):
+        return Response(IntegrationService().public_catalog(), status=status.HTTP_200_OK)
+
+
+class AlliedCatalogIntegrationView(APIView):
+    def get(self, request):
+        try:
+            return Response(IntegrationService().allied_catalog(), status=status.HTTP_200_OK)
+        except RequestException as e:
+            return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
+
+
+class ExchangeRateView(APIView):
+    def get(self, request):
+        from_currency = request.query_params.get("from", "USD")
+        to_currency = request.query_params.get("to", "COP")
+        try:
+            data = IntegrationService().exchange_rate(from_currency, to_currency)
+            return Response(data, status=status.HTTP_200_OK)
+        except (RequestException, ValueError) as e:
+            return Response({"error": str(e)}, status=status.HTTP_502_BAD_GATEWAY)
