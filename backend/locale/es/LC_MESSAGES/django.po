@@ -21,3 +21,60 @@ msgstr "Compra confirmada. Estamos preparando tu pedido y enviaremos por correo 
 
 msgid "Incorrect email or password."
 msgstr "Correo o contrasena incorrectos."
+
+msgid "A user with that email already exists."
+msgstr "Ya existe un usuario con ese correo."
+
+msgid "Profile not found."
+msgstr "Perfil no encontrado."
+
+msgid "Product not found."
+msgstr "Producto no encontrado."
+
+msgid "No stock record found for that product."
+msgstr "No existe registro de stock para ese producto."
+
+msgid "Insufficient stock for product %(product_id)s."
+msgstr "Stock insuficiente para el producto %(product_id)s."
+
+msgid "Not enough stock to add to cart."
+msgstr "No hay suficiente stock para agregar al carrito."
+
+msgid "The user does not have an active cart."
+msgstr "El usuario no tiene un carrito activo."
+
+msgid "The cart is empty."
+msgstr "El carrito esta vacio."
+
+msgid "Insufficient stock for: %(product_name)s"
+msgstr "Stock insuficiente para: %(product_name)s"
+
+msgid "User profile not found."
+msgstr "Perfil de usuario no encontrado."
+
+msgid "The order must have an associated user."
+msgstr "El pedido debe tener un usuario asociado."
+
+msgid "The order must contain at least one product."
+msgstr "El pedido debe contener al menos un producto."
+
+msgid "The shipping address is not valid."
+msgstr "La direccion de envio no es valida."
+
+msgid "No products to calculate the total."
+msgstr "No hay productos para calcular el total."
+
+msgid "The order total must be greater than zero."
+msgstr "El total del pedido debe ser mayor que cero."
+
+msgid "The order has no user."
+msgstr "El pedido no tiene usuario."
+
+msgid "The order has no shipping address."
+msgstr "El pedido no tiene direccion de envio."
+
+msgid "Rate %(from_currency)s-%(to_currency)s not found in provider response."
+msgstr "La tasa %(from_currency)s-%(to_currency)s no se encontro en la respuesta del proveedor."
+
+msgid "Configure ALLIED_SERVICE_URL with the allied team's endpoint."
+msgstr "Configura ALLIED_SERVICE_URL con el endpoint del equipo aliado."

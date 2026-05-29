@@ -21,3 +21,60 @@ msgstr "Purchase confirmed. We are preparing your order and will email the estim
 
 msgid "Incorrect email or password."
 msgstr "Incorrect email or password."
+
+msgid "A user with that email already exists."
+msgstr "A user with that email already exists."
+
+msgid "Profile not found."
+msgstr "Profile not found."
+
+msgid "Product not found."
+msgstr "Product not found."
+
+msgid "No stock record found for that product."
+msgstr "No stock record found for that product."
+
+msgid "Insufficient stock for product %(product_id)s."
+msgstr "Insufficient stock for product %(product_id)s."
+
+msgid "Not enough stock to add to cart."
+msgstr "Not enough stock to add to cart."
+
+msgid "The user does not have an active cart."
+msgstr "The user does not have an active cart."
+
+msgid "The cart is empty."
+msgstr "The cart is empty."
+
+msgid "Insufficient stock for: %(product_name)s"
+msgstr "Insufficient stock for: %(product_name)s"
+
+msgid "User profile not found."
+msgstr "User profile not found."
+
+msgid "The order must have an associated user."
+msgstr "The order must have an associated user."
+
+msgid "The order must contain at least one product."
+msgstr "The order must contain at least one product."
+
+msgid "The shipping address is not valid."
+msgstr "The shipping address is not valid."
+
+msgid "No products to calculate the total."
+msgstr "No products to calculate the total."
+
+msgid "The order total must be greater than zero."
+msgstr "The order total must be greater than zero."
+
+msgid "The order has no user."
+msgstr "The order has no user."
+
+msgid "The order has no shipping address."
+msgstr "The order has no shipping address."
+
+msgid "Rate %(from_currency)s-%(to_currency)s not found in provider response."
+msgstr "Rate %(from_currency)s-%(to_currency)s not found in provider response."
+
+msgid "Configure ALLIED_SERVICE_URL with the allied team's endpoint."
+msgstr "Configure ALLIED_SERVICE_URL with the allied team's endpoint."
