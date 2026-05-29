@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -27,12 +27,8 @@ class CreateOrderViewTests(TestCase):
         Stock.objects.create(product=self.product, available_quantity=3, reserved_quantity=0)
         CartItem.objects.create(cart=self.cart, product=self.product, quantity=1)
 
-    @patch("api.application.services.NotifierFactory.create")
-    def test_create_order_confirms_purchase_and_returns_delivery_estimate(self, create_notifier):
-        notifier = Mock()
-        notifier.send_confirmation.return_value = True
-        create_notifier.return_value = notifier
-
+    @patch("api.application.services.queue_optional_task", return_value=True)
+    def test_create_order_confirms_purchase_and_returns_delivery_estimate(self, queue_task):
         response = self.client.post(
             "/api/pedidos/crear/",
             {
@@ -46,5 +42,5 @@ class CreateOrderViewTests(TestCase):
         self.assertEqual(response.data["status"], "confirmed")
         self.assertTrue(response.data["email_sent"])
         self.assertIn("estimated_delivery_date", response.data)
-        self.assertIn("producto se compro correctamente", response.data["message"])
-        notifier.send_confirmation.assert_called_once()
+        self.assertIn("Compra confirmada", response.data["message"])
+        self.assertEqual(queue_task.call_count, 2)
